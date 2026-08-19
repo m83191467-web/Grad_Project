@@ -9,7 +9,6 @@ import '../screens/login_screen.dart';
 import '../screens/onboarding_screen.dart';
 import '../screens/passenger/home_screen.dart';
 import '../screens/passenger/route_details.dart';
-import '../screens/passenger/trip_history.dart';
 import '../screens/passenger/trip_history_enhanced.dart';
 import '../screens/passenger/trip_tracking.dart';
 import '../screens/passenger/trip_tracking_enhanced.dart';
@@ -34,7 +33,9 @@ class AppRouter {
       case '/route_details':
         return MaterialPageRoute(builder: (_) => const RouteDetailsScreen());
       case '/trip_history':
-        return MaterialPageRoute(builder: (_) => const TripHistoryScreen());
+        return MaterialPageRoute(
+          builder: (_) => const EnhancedTripHistoryScreen(),
+        );
       case '/trip_history_enhanced':
         return MaterialPageRoute(
           builder: (_) => const EnhancedTripHistoryScreen(),

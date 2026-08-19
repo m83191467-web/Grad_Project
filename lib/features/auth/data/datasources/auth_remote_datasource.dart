@@ -51,6 +51,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<User?> signInWithGoogle() async {
     try {
+      // Clear the cached Google session so the account chooser is shown.
+      await _googleSignIn.signOut();
       final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) return null;
 

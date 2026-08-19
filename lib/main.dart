@@ -36,6 +36,12 @@ class NavioApp extends StatelessWidget {
         title: AppStrings.appName,
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
+        builder: (context, child) {
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: child ?? const SizedBox.shrink(),
+          );
+        },
         onGenerateRoute: AppRouter.generateRoute,
         initialRoute: '/splash',
       ),

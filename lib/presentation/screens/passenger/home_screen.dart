@@ -23,6 +23,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   int _selectedIndex = 0;
   late final Set<Marker> _markers = {};
   late final Future<UserModel?> _userProfileFuture;
+  bool _showWelcomeCard = true;
 
   static const CameraPosition _initialPosition = CameraPosition(
     target: LatLng(15.5007, 32.5599),
@@ -33,8 +34,12 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   void initState() {
     super.initState();
     _userProfileFuture = _loadCurrentUserProfile();
+    Future<void>.delayed(const Duration(seconds: 5), () {
+      if (mounted) {
+        setState(() => _showWelcomeCard = false);
+      }
+    });
     _requestLocationPermission();
-    // Fetch available routes when screen loads
     context.read<UserDataBloc>().add(FetchAvailableRoutesRequested());
   }
 
@@ -99,7 +104,6 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
     _markers.clear();
     for (int i = 0; i < routes.length; i++) {
       final route = routes[i];
-      // Generate random nearby coordinates for demo
       final lat = 15.5007 + (i * 0.02);
       final lng = 32.5599 + (i * 0.02);
 
@@ -210,56 +214,65 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
 
   // ========== WELCOME CARD ==========
   Widget _buildWelcomeCard() {
-    return FutureBuilder<UserModel?>(
-      future: _userProfileFuture,
-      builder: (context, snapshot) {
-        final user = snapshot.data;
-        final displayName = user?.name.trim().isNotEmpty == true
-            ? user!.name
-            : 'مستخدم';
-
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppTheme.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                _buildAvatar(user, 36),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${AppStrings.welcome} $displayName!',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 1),
-                      Text(
-                        user?.email ?? '',
-                        style: TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 10,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 450),
+      transitionBuilder: (child, animation) {
+        return FadeTransition(
+          opacity: animation,
+          child: SizeTransition(
+            sizeFactor: animation,
+            alignment: Alignment.topCenter,
+            child: child,
           ),
         );
       },
+      child: _showWelcomeCard
+          ? FutureBuilder<UserModel?>(
+              future: _userProfileFuture,
+              builder: (context, snapshot) {
+                final user = snapshot.data;
+                final fullName = user?.name.trim() ?? '';
+                final displayName = fullName.isNotEmpty
+                    ? fullName.split(RegExp(r'\s+')).first
+                    : 'مستخدم';
+
+                return Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '${AppStrings.welcome} $displayName!',
+                              textAlign: TextAlign.right,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            )
+          : const SizedBox(key: ValueKey('welcome-card-hidden')),
     );
   }
 
@@ -290,20 +303,21 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
           }
 
           return Container(
-            height: 150,
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            height: 180,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: state.routes.length,
               itemBuilder: (context, index) {
                 final route = state.routes[index];
                 return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: _routeCard(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: _beautifulRouteCard(
                     route.id,
                     '${route.startLocation} - ${route.endLocation}',
                     '${route.duration} دقيقة',
                     '${route.fare.toStringAsFixed(0)} جنيه',
+                    index,
                   ),
                 );
               },
@@ -336,124 +350,234 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
     );
   }
 
-  // ========== ROUTE CARD (FIXED OVERFLOW) ==========
-  Widget _routeCard(String busNumber, String route, String eta, String price) {
+  // ============================================================
+  // 🌟 BEAUTIFUL ROUTE CARD — REDESIGNED
+  // ============================================================
+  Widget _beautifulRouteCard(
+    String busNumber,
+    String route,
+    String eta,
+    String price,
+    int index,
+  ) {
+    // Color palette — each card gets a unique gradient
+    final List<List<Color>> gradients = [
+      [const Color(0xFF667eea), const Color(0xFF764ba2)],
+      [const Color(0xFFf093fb), const Color(0xFFf5576c)],
+      [const Color(0xFF4facfe), const Color(0xFF00f2fe)],
+      [const Color(0xFF43e97b), const Color(0xFF38f9d7)],
+      [const Color(0xFFfa709a), const Color(0xFFfee140)],
+      [const Color(0xFFa18cd1), const Color(0xFFfbc2eb)],
+    ];
+
+    final gradientColors = gradients[index % gradients.length];
+
     return Container(
-      width: 200,
-      margin: const EdgeInsets.only(left: 4),
-      padding: const EdgeInsets.all(10), // reduced padding
+      width: 210,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: gradientColors,
+        ),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            offset: const Offset(0, 2),
-            blurRadius: 8,
+            color: gradientColors.last.withValues(alpha: 0.4),
+            offset: const Offset(0, 8),
+            blurRadius: 20,
+            spreadRadius: 1,
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
+        children: [
+          // Decorative circles
+          Positioned(
+            top: -10,
+            right: -10,
+            child: Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -20,
+            left: -20,
+            child: Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          // Content
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Top row: bus icon + number + badge
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.25),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.directions_bus,
+                            color: Colors.white,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'رقم $busNumber',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '● مباشر',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                // Route name
+                Text(
+                  route,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    height: 1.3,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                // ETA + Price row
+                Row(
+                  children: [
+                    _buildInfoChip(
+                      icon: Icons.access_time,
+                      label: eta,
+                      color: Colors.white.withValues(alpha: 0.9),
+                    ),
+                    const SizedBox(width: 10),
+                    _buildInfoChip(
+                      icon: Icons.attach_money,
+                      label: price,
+                      color: Colors.white.withValues(alpha: 0.9),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                // Confirm button
+                SizedBox(
+                  width: double.infinity,
+                  height: 32,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushNamed(
+                        context,
+                        '/route_details',
+                        arguments: {
+                          'busNumber': busNumber,
+                          'route': route,
+                          'price': price,
+                          'eta': eta,
+                        },
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: gradientColors.first,
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                      textStyle: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('تأكيد الحجز'),
+                        SizedBox(width: 4),
+                        Icon(Icons.arrow_forward, size: 14),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoChip({
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Row: icon + number
-          Row(
-            children: [
-              Container(
-                width: 24, // smaller
-                height: 24,
-                decoration: BoxDecoration(
-                  color: AppTheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Icon(
-                  Icons.directions_bus,
-                  color: AppTheme.primary,
-                  size: 14,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                'رقم $busNumber',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 10, // smaller
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 3),
-          // Route name
+          Icon(icon, color: color, size: 12),
+          const SizedBox(width: 3),
           Text(
-            route,
-            style: const TextStyle(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 10,
               fontWeight: FontWeight.w600,
-              fontSize: 10, // smaller
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 3),
-          // ETA
-          Row(
-            children: [
-              const Icon(Icons.access_time, size: 10, color: AppTheme.accent),
-              const SizedBox(width: 2),
-              Text(
-                eta,
-                style: const TextStyle(color: AppTheme.accent, fontSize: 9),
-              ),
-            ],
-          ),
-          const SizedBox(height: 2),
-          // Price
-          Row(
-            children: [
-              const Icon(
-                Icons.attach_money,
-                size: 10,
-                color: AppTheme.secondary,
-              ),
-              const SizedBox(width: 2),
-              Text(
-                price,
-                style: const TextStyle(
-                  color: AppTheme.secondary,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          // Confirm button - smaller height
-          SizedBox(
-            width: double.infinity,
-            height: 24,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(
-                  context,
-                  '/route_details',
-                  arguments: {
-                    'busNumber': busNumber,
-                    'route': route,
-                    'price': price,
-                    'eta': eta,
-                  },
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                textStyle: const TextStyle(fontSize: 10),
-              ),
-              child: const Text('تأكيد', style: TextStyle(fontSize: 10)),
             ),
           ),
         ],
@@ -478,7 +602,9 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   // ========== DRAWER ==========
   Widget _buildDrawer() {
     return Drawer(
-      child: SafeArea(
+      child: MediaQuery.removePadding(
+        context: context,
+        removeTop: true,
         child: FutureBuilder<UserModel?>(
           future: _userProfileFuture,
           builder: (context, snapshot) {
