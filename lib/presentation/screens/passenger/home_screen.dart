@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -8,6 +10,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../features/user/presentation/bloc/user_data_bloc.dart';
 import '../../../features/user/presentation/bloc/user_data_event.dart';
 import '../../../features/user/presentation/bloc/user_data_state.dart';
+import '../../../models/user_model.dart';
 
 class PassengerHomeScreen extends StatefulWidget {
   const PassengerHomeScreen({super.key});
@@ -19,6 +22,7 @@ class PassengerHomeScreen extends StatefulWidget {
 class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   int _selectedIndex = 0;
   late final Set<Marker> _markers = {};
+  late final Future<UserModel?> _userProfileFuture;
 
   static const CameraPosition _initialPosition = CameraPosition(
     target: LatLng(15.5007, 32.5599),
@@ -28,9 +32,28 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   @override
   void initState() {
     super.initState();
+    _userProfileFuture = _loadCurrentUserProfile();
     _requestLocationPermission();
     // Fetch available routes when screen loads
     context.read<UserDataBloc>().add(FetchAvailableRoutesRequested());
+  }
+
+  Future<UserModel?> _loadCurrentUserProfile() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return null;
+
+    final document = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser.uid)
+        .get();
+    final data = document.data() ?? <String, dynamic>{};
+
+    return UserModel.fromMap({
+      ...data,
+      'name': data['name'] ?? currentUser.displayName ?? '',
+      'email': data['email'] ?? currentUser.email ?? '',
+      'phone': data['phone'] ?? currentUser.phoneNumber ?? '',
+    }, currentUser.uid);
   }
 
   Future<void> _requestLocationPermission() async {
@@ -187,52 +210,69 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
 
   // ========== WELCOME CARD ==========
   Widget _buildWelcomeCard() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: AppTheme.primary.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: AppTheme.primary,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.person, color: Colors.white, size: 18),
+    return FutureBuilder<UserModel?>(
+      future: _userProfileFuture,
+      builder: (context, snapshot) {
+        final user = snapshot.data;
+        final displayName = user?.name.trim().isNotEmpty == true
+            ? user!.name
+            : 'مستخدم';
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppTheme.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${AppStrings.welcome} محمد!',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
+            child: Row(
+              children: [
+                _buildAvatar(user, 36),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${AppStrings.welcome} $displayName!',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 1),
+                      Text(
+                        user?.email ?? '',
+                        style: TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 10,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 1),
-                  Text(
-                    'الحافلات • 3 خطوط',
-                    style: TextStyle(
-                      color: AppTheme.textSecondary,
-                      fontSize: 10,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAvatar(UserModel? user, double radius) {
+    return CircleAvatar(
+      radius: radius / 2,
+      backgroundColor: AppTheme.primary,
+      backgroundImage: user?.avatar?.isNotEmpty == true
+          ? NetworkImage(user!.avatar!)
+          : null,
+      child: user?.avatar?.isNotEmpty == true
+          ? null
+          : Icon(Icons.person, color: Colors.white, size: radius * 0.55),
     );
   }
 
@@ -439,66 +479,73 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   Widget _buildDrawer() {
     return Drawer(
       child: SafeArea(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: AppTheme.primary),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundColor: Colors.white,
-                    child: Icon(
-                      Icons.person,
-                      size: 34,
-                      color: AppTheme.primary,
-                    ),
+        child: FutureBuilder<UserModel?>(
+          future: _userProfileFuture,
+          builder: (context, snapshot) {
+            final user = snapshot.data;
+            final displayName = user?.name.trim().isNotEmpty == true
+                ? user!.name
+                : 'مستخدم';
+
+            return ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                DrawerHeader(
+                  decoration: const BoxDecoration(color: AppTheme.primary),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildAvatar(user, 60),
+                      const SizedBox(height: 12),
+                      Text(
+                        displayName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                        ),
+                      ),
+                      Text(
+                        user?.email ?? '',
+                        style: const TextStyle(color: Colors.white70),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 12),
-                  Text(
-                    'محمد عباس',
-                    style: TextStyle(color: Colors.white, fontSize: 18),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.history),
+                  title: Text(AppStrings.recentTrips),
+                  onTap: () {
+                    Navigator.pushNamed(context, '/trip_history');
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.payment),
+                  title: Text(AppStrings.payment),
+                  onTap: () {
+                    Navigator.pushNamed(context, '/payment');
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.settings),
+                  title: Text(AppStrings.settings),
+                  onTap: () {
+                    Navigator.pushNamed(context, '/profile');
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.logout, color: AppTheme.danger),
+                  title: Text(
+                    AppStrings.logout,
+                    style: const TextStyle(color: AppTheme.danger),
                   ),
-                  Text(
-                    'mohamed@email.com',
-                    style: TextStyle(color: Colors.white70),
-                  ),
-                ],
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.history),
-              title: Text(AppStrings.recentTrips),
-              onTap: () {
-                Navigator.pushNamed(context, '/trip_history');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.payment),
-              title: Text(AppStrings.payment),
-              onTap: () {
-                Navigator.pushNamed(context, '/payment');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: Text(AppStrings.settings),
-              onTap: () {
-                Navigator.pushNamed(context, '/profile');
-              },
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.logout, color: AppTheme.danger),
-              title: Text(
-                AppStrings.logout,
-                style: const TextStyle(color: AppTheme.danger),
-              ),
-              onTap: _logout,
-            ),
-          ],
+                  onTap: _logout,
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

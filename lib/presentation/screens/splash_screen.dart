@@ -18,6 +18,9 @@ class _SplashScreenState extends State<SplashScreen>
   late final AnimationController _controller;
   late final Animation<double> _animation;
   bool _navigationHandled = false;
+  bool _navigationScheduled = false;
+
+  static const _minimumSplashDuration = Duration(milliseconds: 1200);
 
   @override
   void initState() {
@@ -39,6 +42,18 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
+  void _scheduleNavigation() {
+    if (_navigationHandled || _navigationScheduled) return;
+
+    _navigationScheduled = true;
+    Future<void>.delayed(_minimumSplashDuration, () {
+      if (!mounted || _navigationHandled) return;
+
+      _navigationHandled = true;
+      Navigator.pushReplacementNamed(context, '/login');
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<AuthBloc, AuthState>(
@@ -46,43 +61,19 @@ class _SplashScreenState extends State<SplashScreen>
         // Skip loading state, only process final states
         if (state is AuthLoading) return;
 
-        if (!_navigationHandled) {
-          _navigationHandled = true;
-
-          if (state is AuthAuthenticated) {
-            Navigator.pushReplacementNamed(context, '/home');
-          } else if (state is AuthUnauthenticated) {
-            Navigator.pushReplacementNamed(context, '/login');
-          } else if (state is AuthError) {
-            Navigator.pushReplacementNamed(context, '/login');
-          }
+        if (state is AuthAuthenticated ||
+            state is AuthUnauthenticated ||
+            state is AuthError) {
+          _scheduleNavigation();
         }
       },
       builder: (context, state) {
-        // If we're already authenticated or unauthenticated, navigate immediately
-        if (!_navigationHandled) {
-          if (state is AuthAuthenticated) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (!_navigationHandled) {
-                _navigationHandled = true;
-                Navigator.pushReplacementNamed(context, '/home');
-              }
-            });
-          } else if (state is AuthUnauthenticated) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (!_navigationHandled) {
-                _navigationHandled = true;
-                Navigator.pushReplacementNamed(context, '/login');
-              }
-            });
-          } else if (state is AuthError) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (!_navigationHandled) {
-                _navigationHandled = true;
-                Navigator.pushReplacementNamed(context, '/login');
-              }
-            });
-          }
+        if (state is AuthAuthenticated ||
+            state is AuthUnauthenticated ||
+            state is AuthError) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _scheduleNavigation();
+          });
         }
 
         return Scaffold(

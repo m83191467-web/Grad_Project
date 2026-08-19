@@ -58,11 +58,16 @@ class _EnhancedProfileScreenState extends State<EnhancedProfileScreen> {
                         CircleAvatar(
                           radius: 60,
                           backgroundColor: AppTheme.primary,
-                          child: const Icon(
-                            Icons.person,
-                            size: 60,
-                            color: Colors.white,
-                          ),
+                          backgroundImage: user.avatar?.isNotEmpty == true
+                              ? NetworkImage(user.avatar!)
+                              : null,
+                          child: user.avatar?.isNotEmpty == true
+                              ? null
+                              : const Icon(
+                                  Icons.person,
+                                  size: 60,
+                                  color: Colors.white,
+                                ),
                         ),
                         const SizedBox(height: 16),
                         Text(
