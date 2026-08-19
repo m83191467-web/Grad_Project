@@ -14,6 +14,7 @@ import 'features/user/presentation/bloc/user_data_bloc.dart';
 import 'firebase_options.dart';
 import 'presentation/navigation/app_router.dart';
 import 'providers/language_provider.dart';
+import 'providers/theme_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,6 +31,7 @@ class NavioApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ...[
           BlocProvider<AuthBloc>(
             create: (_) => di.sl<AuthBloc>()..add(AppStarted()),
@@ -38,8 +40,8 @@ class NavioApp extends StatelessWidget {
           BlocProvider<UserDataBloc>(create: (_) => di.sl<UserDataBloc>()),
         ],
       ],
-      child: Consumer<LanguageProvider>(
-        builder: (context, language, _) {
+      child: Consumer2<LanguageProvider, ThemeProvider>(
+        builder: (context, language, theme, _) {
           final isArabic = language.locale.languageCode == 'ar';
 
           return MaterialApp(
@@ -49,6 +51,8 @@ class NavioApp extends StatelessWidget {
             supportedLocales: const [Locale('ar'), Locale('en')],
             localizationsDelegates: GlobalMaterialLocalizations.delegates,
             theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: theme.themeMode,
             builder: (context, child) {
               return Directionality(
                 textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,

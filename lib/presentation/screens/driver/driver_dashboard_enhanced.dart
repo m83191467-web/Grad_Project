@@ -102,7 +102,7 @@ class _DriverDashboardEnhancedState extends State<DriverDashboardEnhanced> {
                             ),
                           );
                         },
-                        activeColor: AppTheme.secondary,
+                        activeThumbColor: AppTheme.secondary,
                       ),
                     ],
                   ),

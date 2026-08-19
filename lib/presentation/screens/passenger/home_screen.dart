@@ -524,6 +524,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                         context,
                         '/route_details',
                         arguments: {
+                          'routeId': busNumber,
                           'busNumber': busNumber,
                           'route': route,
                           'price': price,

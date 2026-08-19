@@ -7,6 +7,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../models/user_model.dart';
 import '../../../providers/language_provider.dart';
+import '../../../providers/theme_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -110,8 +111,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       SwitchListTile(
                         title: Text(AppStrings.darkMode),
-                        value: false,
-                        onChanged: (_) {},
+                        value: context.watch<ThemeProvider>().isDarkMode,
+                        onChanged: (enabled) => context
+                            .read<ThemeProvider>()
+                            .toggleDarkMode(enabled),
                       ),
                       SwitchListTile(
                         title: Text(AppStrings.notifications),
@@ -185,23 +188,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const ListTile(
               title: Text('اختر اللغة', textAlign: TextAlign.right),
             ),
-            RadioListTile<String>(
-              value: 'ar',
+            RadioGroup<String>(
               groupValue: language.locale.languageCode,
-              title: const Text('العربية'),
               onChanged: (value) {
                 if (value != null) language.changeLanguage(value);
                 Navigator.pop(sheetContext);
               },
-            ),
-            RadioListTile<String>(
-              value: 'en',
-              groupValue: language.locale.languageCode,
-              title: const Text('English'),
-              onChanged: (value) {
-                if (value != null) language.changeLanguage(value);
-                Navigator.pop(sheetContext);
-              },
+              child: const Column(
+                children: [
+                  RadioListTile<String>(value: 'ar', title: Text('العربية')),
+                  RadioListTile<String>(value: 'en', title: Text('English')),
+                ],
+              ),
             ),
             const SizedBox(height: 12),
           ],

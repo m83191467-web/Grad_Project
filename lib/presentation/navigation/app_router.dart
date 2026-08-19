@@ -35,6 +35,7 @@ class AppRouter {
         final data = arguments is Map ? arguments : const <String, dynamic>{};
         return MaterialPageRoute(
           builder: (_) => RouteDetailsScreen(
+            routeId: data['routeId'] as String?,
             routeName: data['route'] as String?,
             price: data['price'] as String?,
             eta: data['eta'] as String?,
