@@ -622,7 +622,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   }
 
   void _showDestinationPicker() {
-    final destinationController = TextEditingController();
+    var destination = '';
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -652,9 +652,9 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
               ),
               const SizedBox(height: 16),
               TextField(
-                controller: destinationController,
                 autofocus: true,
                 textAlign: TextAlign.right,
+                onChanged: (value) => destination = value,
                 decoration: const InputDecoration(
                   labelText: 'الوجهة',
                   prefixIcon: Icon(Icons.location_on_outlined),
@@ -663,12 +663,13 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 onPressed: () {
-                  if (destinationController.text.trim().isEmpty) return;
+                  final trimmedDestination = destination.trim();
+                  if (trimmedDestination.isEmpty) return;
                   Navigator.pop(sheetContext);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        'جارٍ البحث عن رحلات إلى ${destinationController.text.trim()}',
+                        'جارٍ البحث عن رحلات إلى $trimmedDestination',
                       ),
                     ),
                   );
@@ -680,7 +681,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
           ),
         );
       },
-    ).whenComplete(destinationController.dispose);
+    );
   }
 
   // ========== DRAWER ==========
