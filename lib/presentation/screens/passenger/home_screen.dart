@@ -133,7 +133,11 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
         title: Text(AppStrings.appName),
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('لا توجد إشعارات جديدة')),
+              );
+            },
             icon: const Icon(Icons.notifications_none),
           ),
         ],
@@ -194,6 +198,8 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
         ),
         child: TextField(
           textAlign: TextAlign.right,
+          readOnly: true,
+          onTap: _showDestinationPicker,
           decoration: InputDecoration(
             hintText: AppStrings.searchRoute,
             border: InputBorder.none,
@@ -589,14 +595,91 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   Widget _buildBottomNav() {
     return BottomNavigationBar(
       currentIndex: _selectedIndex,
-      onTap: (index) => setState(() => _selectedIndex = index),
+      onTap: _handleBottomNavigation,
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'الرئيسية'),
+        BottomNavigationBarItem(icon: Icon(Icons.history), label: 'رحلاتي'),
         BottomNavigationBarItem(icon: Icon(Icons.map), label: 'الخريطة'),
-        BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'الدفع'),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: 'الملف'),
       ],
     );
+  }
+
+  void _handleBottomNavigation(int index) {
+    setState(() => _selectedIndex = index);
+    switch (index) {
+      case 1:
+        Navigator.pushNamed(context, '/trip_history');
+        break;
+      case 2:
+        _showDestinationPicker();
+        break;
+      case 3:
+        Navigator.pushNamed(context, '/profile');
+        break;
+    }
+  }
+
+  void _showDestinationPicker() {
+    final destinationController = TextEditingController();
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            8,
+            20,
+            MediaQuery.of(sheetContext).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'إلى أين تريد الذهاب؟',
+                style: Theme.of(context).textTheme.headlineSmall,
+                textAlign: TextAlign.right,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'اكتب وجهتك لنقترح عليك أقرب الرحلات.',
+                style: Theme.of(context).textTheme.bodyMedium,
+                textAlign: TextAlign.right,
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: destinationController,
+                autofocus: true,
+                textAlign: TextAlign.right,
+                decoration: const InputDecoration(
+                  labelText: 'الوجهة',
+                  prefixIcon: Icon(Icons.location_on_outlined),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () {
+                  if (destinationController.text.trim().isEmpty) return;
+                  Navigator.pop(sheetContext);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'جارٍ البحث عن رحلات إلى ${destinationController.text.trim()}',
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.search),
+                label: const Text('البحث عن رحلة'),
+              ),
+            ],
+          ),
+        );
+      },
+    ).whenComplete(destinationController.dispose);
   }
 
   // ========== DRAWER ==========
@@ -650,7 +733,12 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                   leading: const Icon(Icons.payment),
                   title: Text(AppStrings.payment),
                   onTap: () {
-                    Navigator.pushNamed(context, '/payment');
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('الدفع الإلكتروني سيكون متاحاً قريباً'),
+                      ),
+                    );
                   },
                 ),
                 ListTile(
@@ -690,9 +778,12 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
             child: Text(AppStrings.cancel),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
+              final navigator = Navigator.of(context);
               Navigator.pop(context);
-              Navigator.pushReplacementNamed(context, '/login');
+              await FirebaseAuth.instance.signOut();
+              if (!mounted) return;
+              navigator.pushNamedAndRemoveUntil('/login', (_) => false);
             },
             child: Text(
               AppStrings.logout,

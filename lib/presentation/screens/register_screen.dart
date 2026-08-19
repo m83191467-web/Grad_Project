@@ -1,45 +1,124 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-class RegisterScreen extends StatelessWidget {
+import '../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../features/auth/presentation/bloc/auth_event.dart';
+import '../../features/auth/presentation/bloc/auth_state.dart';
+
+class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
   @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    context.read<AuthBloc>().add(
+      RegisterRequested(
+        name: _nameController.text.trim(),
+        phone: _phoneController.text.trim(),
+        email: _emailController.text.trim().isEmpty
+            ? null
+            : _emailController.text.trim(),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('إنشاء حساب')),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              TextField(
-                textAlign: TextAlign.right,
-                decoration: const InputDecoration(labelText: 'الاسم الكامل'),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                textAlign: TextAlign.right,
-                decoration: const InputDecoration(labelText: 'رقم الهاتف'),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                textAlign: TextAlign.right,
-                decoration: const InputDecoration(
-                  labelText: 'البريد الإلكتروني',
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthLoading) {
+          setState(() => _isLoading = true);
+        } else if (state is AuthAuthenticated) {
+          setState(() => _isLoading = false);
+          Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
+        } else if (state is AuthError) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message)));
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(title: const Text('إنشاء حساب')),
+        body: SafeArea(
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              padding: const EdgeInsets.all(24),
+              children: [
+                Text(
+                  'انضم إلى Navio',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                  textAlign: TextAlign.right,
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                textAlign: TextAlign.right,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'كلمة المرور'),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('إنشاء الحساب'),
-              ),
-            ],
+                const SizedBox(height: 8),
+                Text(
+                  'أدخل بياناتك للبدء في حجز الرحلات بسهولة.',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  textAlign: TextAlign.right,
+                ),
+                const SizedBox(height: 28),
+                TextFormField(
+                  controller: _nameController,
+                  enabled: !_isLoading,
+                  textAlign: TextAlign.right,
+                  decoration: const InputDecoration(labelText: 'الاسم الكامل'),
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? 'يرجى إدخال الاسم'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _phoneController,
+                  enabled: !_isLoading,
+                  textAlign: TextAlign.right,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(labelText: 'رقم الهاتف'),
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? 'يرجى إدخال رقم الهاتف'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _emailController,
+                  enabled: !_isLoading,
+                  textAlign: TextAlign.right,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    labelText: 'البريد الإلكتروني (اختياري)',
+                  ),
+                ),
+                const SizedBox(height: 28),
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _submit,
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('إنشاء الحساب'),
+                ),
+              ],
+            ),
           ),
         ),
       ),

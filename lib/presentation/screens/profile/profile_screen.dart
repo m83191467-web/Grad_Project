@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../models/user_model.dart';
+import '../../../providers/language_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -119,7 +121,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ListTile(
                         leading: const Icon(Icons.language),
                         title: Text(AppStrings.language),
+                        subtitle: Text(
+                          context
+                                      .watch<LanguageProvider>()
+                                      .locale
+                                      .languageCode ==
+                                  'ar'
+                              ? 'العربية'
+                              : 'English',
+                        ),
                         trailing: const Icon(Icons.arrow_forward_ios_rounded),
+                        onTap: () => _showLanguagePicker(context),
                       ),
                       ListTile(
                         leading: const Icon(Icons.lock),
@@ -150,7 +162,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.danger,
                   ),
-                  onPressed: () {},
+                  onPressed: _signOut,
                   child: Text(AppStrings.logout),
                 ),
               ],
@@ -159,5 +171,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
         },
       ),
     );
+  }
+
+  void _showLanguagePicker(BuildContext context) {
+    final language = context.read<LanguageProvider>();
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const ListTile(
+              title: Text('اختر اللغة', textAlign: TextAlign.right),
+            ),
+            RadioListTile<String>(
+              value: 'ar',
+              groupValue: language.locale.languageCode,
+              title: const Text('العربية'),
+              onChanged: (value) {
+                if (value != null) language.changeLanguage(value);
+                Navigator.pop(sheetContext);
+              },
+            ),
+            RadioListTile<String>(
+              value: 'en',
+              groupValue: language.locale.languageCode,
+              title: const Text('English'),
+              onChanged: (value) {
+                if (value != null) language.changeLanguage(value);
+                Navigator.pop(sheetContext);
+              },
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _signOut() async {
+    await FirebaseAuth.instance.signOut();
+    if (!mounted) return;
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
   }
 }

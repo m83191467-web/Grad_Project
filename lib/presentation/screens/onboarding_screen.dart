@@ -112,6 +112,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
+                  if (_index < _pages.length - 1)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton(
+                        onPressed: () =>
+                            Navigator.pushReplacementNamed(context, '/login'),
+                        child: Text(AppStrings.skip),
+                      ),
+                    ),
                   ElevatedButton(
                     onPressed: () {
                       if (_index < _pages.length - 1) {

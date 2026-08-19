@@ -4,7 +4,11 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/theme/app_theme.dart';
 
 class RouteDetailsScreen extends StatelessWidget {
-  const RouteDetailsScreen({super.key});
+  final String? routeName;
+  final String? price;
+  final String? eta;
+
+  const RouteDetailsScreen({super.key, this.routeName, this.price, this.eta});
 
   @override
   Widget build(BuildContext context) {
@@ -21,13 +25,13 @@ class RouteDetailsScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'الجامعة → السوق',
+                      routeName ?? 'الجامعة → السوق',
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     const SizedBox(height: 12),
                     _infoRow('المسافة', '8.4 كم'),
-                    _infoRow('الوقت', '18 دقيقة'),
-                    _infoRow('السعر', '150 جنيه'),
+                    _infoRow('الوقت', eta ?? '18 دقيقة'),
+                    _infoRow('السعر', price ?? '150 جنيه'),
                   ],
                 ),
               ),

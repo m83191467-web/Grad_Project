@@ -31,7 +31,15 @@ class AppRouter {
       case '/home':
         return MaterialPageRoute(builder: (_) => const PassengerHomeScreen());
       case '/route_details':
-        return MaterialPageRoute(builder: (_) => const RouteDetailsScreen());
+        final arguments = settings.arguments;
+        final data = arguments is Map ? arguments : const <String, dynamic>{};
+        return MaterialPageRoute(
+          builder: (_) => RouteDetailsScreen(
+            routeName: data['route'] as String?,
+            price: data['price'] as String?,
+            eta: data['eta'] as String?,
+          ),
+        );
       case '/trip_history':
         return MaterialPageRoute(
           builder: (_) => const EnhancedTripHistoryScreen(),
