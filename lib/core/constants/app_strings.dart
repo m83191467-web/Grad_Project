@@ -1,0 +1,91 @@
+class AppStrings {
+  static const String appName = 'Navio';
+
+  static const String login = 'تسجيل الدخول';
+  static const String register = 'إنشاء حساب';
+  static const String email = 'البريد الإلكتروني';
+  static const String phone = 'رقم الهاتف';
+  static const String password = 'كلمة المرور';
+  static const String confirmPassword = 'تأكيد كلمة المرور';
+  static const String fullName = 'الاسم الكامل';
+  static const String forgotPassword = 'نسيت كلمة المرور؟';
+  static const String noAccount = 'ليس لديك حساب؟';
+  static const String hasAccount = 'لديك حساب بالفعل؟';
+  static const String welcomeBack = 'مرحباً بعودتك';
+  static const String createAccount = 'أنشئ حسابك الآن';
+  static const String or = 'أو';
+  static const String continueWithGoogle = 'متابعة بواسطة Google';
+  static const String sendOtp = 'إرسال رمز التحقق';
+  static const String verifyOtp = 'تحقق من الرمز';
+
+  static const String welcome = 'أهلاً بك';
+  static const String searchRoute = 'ابحث عن خط...';
+  static const String currentLocation = 'الموقع الحالي';
+  static const String nearbyBuses = 'الحافلات القريبة';
+  static const String favoriteRoutes = 'خطوطي المفضلة';
+  static const String recentTrips = 'رحلاتي الأخيرة';
+
+  static const String tripDetails = 'تفاصيل الرحلة';
+  static const String boarding = 'محطة الصعود';
+  static const String dropoff = 'محطة النزول';
+  static const String distance = 'المسافة';
+  static const String duration = 'الوقت المتوقع';
+  static const String price = 'السعر';
+  static const String confirmTrip = 'تأكيد الرحلة';
+  static const String cancelTrip = 'إلغاء الرحلة';
+  static const String from = 'من';
+  static const String to = 'إلى';
+
+  static const String liveTracking = 'تتبع مباشر';
+  static const String busArriving = 'الحافلة تصل خلال';
+  static const String minutes = 'دقائق';
+  static const String kmAway = 'كم';
+  static const String arriveAlert = 'تنبيه الوصول';
+
+  static const String driverDashboard = 'لوحة تحكم السائق';
+  static const String status = 'الحالة';
+  static const String online = 'متصل';
+  static const String offline = 'غير متصل';
+  static const String passengers = 'الركاب';
+  static const String startTrip = 'بدء الرحلة';
+  static const String endTrip = 'إنهاء الرحلة';
+  static const String registerPassenger = 'تسجيل راكب جديد';
+
+  static const String adminDashboard = 'لوحة تحكم المدير';
+  static const String totalBuses = 'إجمالي الحافلات';
+  static const String totalPassengers = 'إجمالي الركاب';
+  static const String totalRevenue = 'إجمالي الإيرادات';
+  static const String averageRating = 'متوسط التقييم';
+  static const String manageRoutes = 'إدارة الخطوط';
+  static const String addRoute = 'إضافة خط جديد';
+  static const String editPrice = 'تعديل الأسعار';
+  static const String pricePerKm = 'سعر الكيلومتر';
+  static const String fuelPrice = 'سعر الوقود';
+  static const String updatePrices = 'تحديث الأسعار';
+  static const String driverPerformance = 'أداء السائقين';
+
+  static const String profile = 'الملف الشخصي';
+  static const String settings = 'الإعدادات';
+  static const String darkMode = 'الوضع الليلي';
+  static const String notifications = 'الإشعارات';
+  static const String language = 'اللغة';
+  static const String changePassword = 'تغيير كلمة المرور';
+  static const String payment = 'الدفع';
+  static const String creditCard = 'بطاقتي الائتمانية';
+  static const String wallet = 'رصيد المحفظة';
+  static const String logout = 'تسجيل الخروج';
+
+  static const String loading = 'جاري التحميل...';
+  static const String error = 'حدث خطأ';
+  static const String success = 'تم بنجاح';
+  static const String noInternet = 'لا يوجد اتصال بالإنترنت';
+  static const String noTripsFound = 'لم يتم العثور على رحلات';
+  static const String tryAgain = 'حاول مرة أخرى';
+  static const String save = 'حفظ';
+  static const String cancel = 'إلغاء';
+  static const String confirm = 'تأكيد';
+  static const String back = 'رجوع';
+  static const String next = 'التالي';
+  static const String start = 'ابدأ الآن';
+  static const String skip = 'تخطي';
+}
