@@ -111,6 +111,19 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<String> currentUserRole() async {
+    final user = await remoteDataSource.getCurrentUser();
+    if (user == null) return 'passenger';
+    try {
+      final snapshot = await _firestore.collection('users').doc(user.uid).get();
+      final role = snapshot.data()?['type'];
+      return role == 'driver' || role == 'admin' ? role as String : 'passenger';
+    } catch (_) {
+      return 'passenger';
+    }
+  }
+
+  @override
   Future<void> signOut() async {
     await remoteDataSource.signOut();
   }

@@ -7,5 +7,6 @@ abstract class AuthRepository {
     String? email,
   });
   Future<bool> isSignedIn();
+  Future<String> currentUserRole();
   Future<void> signOut();
 }

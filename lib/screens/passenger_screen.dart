@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../core/theme/app_theme.dart';
 import '../features/trip/presentation/bloc/trip_bloc.dart';
@@ -336,12 +337,9 @@ class _PassengerScreenState extends State<PassengerScreen> {
     );
     if (!mounted || choice == null) return;
     setState(() => _activeRide = choice);
+    final userId = FirebaseAuth.instance.currentUser?.uid ?? 'demo-passenger';
     context.read<TripBloc>().add(
-      const BookTripEvent(
-        userId: 'demo-passenger',
-        routeId: 'downtown-station',
-        fare: 120,
-      ),
+      BookTripEvent(userId: userId, routeId: 'downtown-station', fare: 120),
     );
     _showMessage('Your $choice ride is being matched.');
   }

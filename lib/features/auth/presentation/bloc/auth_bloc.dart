@@ -41,7 +41,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       final signedIn = await isSignedIn.call();
       if (signedIn) {
-        emit(AuthAuthenticated());
+        emit(AuthAuthenticated(role: await authRepository.currentUserRole()));
       } else {
         emit(AuthUnauthenticated());
       }
@@ -70,7 +70,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       await authRepository.loginWithEmail(event.email, event.password);
-      emit(AuthAuthenticated());
+      emit(AuthAuthenticated(role: await authRepository.currentUserRole()));
     } catch (e) {
       emit(AuthError(e.toString()));
     }
@@ -83,7 +83,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       await authRepository.signInWithGoogle();
-      emit(AuthAuthenticated());
+      emit(AuthAuthenticated(role: await authRepository.currentUserRole()));
     } catch (e) {
       emit(AuthError(e.toString()));
     }
@@ -96,7 +96,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       await verifyOtp.call(event.otp);
-      emit(AuthAuthenticated());
+      emit(AuthAuthenticated(role: await authRepository.currentUserRole()));
     } catch (e) {
       emit(AuthError(e.toString()));
     }
@@ -113,7 +113,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         phone: event.phone,
         email: event.email,
       );
-      emit(AuthAuthenticated());
+      emit(AuthAuthenticated(role: await authRepository.currentUserRole()));
     } catch (e) {
       emit(AuthError(e.toString()));
     }

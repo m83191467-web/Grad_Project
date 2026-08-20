@@ -50,7 +50,17 @@ class _SplashScreenState extends State<SplashScreen>
       if (!mounted || _navigationHandled) return;
 
       _navigationHandled = true;
-      Navigator.pushReplacementNamed(context, '/login');
+      final state = context.read<AuthBloc>().state;
+      if (state is AuthAuthenticated) {
+        final route = switch (state.role) {
+          'admin' => '/admin_dashboard_enhanced',
+          'driver' => '/driver_dashboard_enhanced',
+          _ => '/home',
+        };
+        Navigator.pushReplacementNamed(context, route);
+      } else {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
     });
   }
 
