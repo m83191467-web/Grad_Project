@@ -10,6 +10,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../features/user/presentation/bloc/user_data_bloc.dart';
 import '../../../features/user/presentation/bloc/user_data_event.dart';
 import '../../../features/user/presentation/bloc/user_data_state.dart';
+import '../../../models/route_model.dart';
 import '../../../models/user_model.dart';
 
 class PassengerHomeScreen extends StatefulWidget {
@@ -22,6 +23,8 @@ class PassengerHomeScreen extends StatefulWidget {
 class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   int _selectedIndex = 0;
   late final Set<Marker> _markers = {};
+  GoogleMapController? _mapController;
+  List<RouteModel> _availableRoutes = [];
   late final Future<UserModel?> _userProfileFuture;
   bool _showWelcomeCard = true;
 
@@ -100,17 +103,17 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
     }
   }
 
-  void _updateMarkersFromRoutes(List<dynamic> routes) {
+  void _updateMarkersFromRoutes(List<RouteModel> routes) {
+    _availableRoutes = routes;
     _markers.clear();
     for (int i = 0; i < routes.length; i++) {
       final route = routes[i];
-      final lat = 15.5007 + (i * 0.02);
-      final lng = 32.5599 + (i * 0.02);
+      final position = _positionForRoute(i);
 
       _markers.add(
         Marker(
           markerId: MarkerId('route_$i'),
-          position: LatLng(lat, lng),
+          position: position,
           infoWindow: InfoWindow(
             title: route.startLocation,
             snippet: 'الاتجاه: ${route.endLocation}',
@@ -123,6 +126,10 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
         ),
       );
     }
+  }
+
+  LatLng _positionForRoute(int index) {
+    return LatLng(15.5007 + (index * 0.02), 32.5599 + (index * 0.02));
   }
 
   @override
@@ -167,6 +174,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                       myLocationEnabled: true,
                       myLocationButtonEnabled: true,
                       mapType: MapType.normal,
+                      onMapCreated: (controller) => _mapController = controller,
                     ),
                   ),
                 ),
@@ -628,58 +636,124 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
       isScrollControlled: true,
       showDragHandle: true,
       builder: (sheetContext) {
-        return Padding(
-          padding: EdgeInsets.fromLTRB(
-            20,
-            8,
-            20,
-            MediaQuery.of(sheetContext).viewInsets.bottom + 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'إلى أين تريد الذهاب؟',
-                style: Theme.of(context).textTheme.headlineSmall,
-                textAlign: TextAlign.right,
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final query = destination.trim().toLowerCase();
+            final results = query.isEmpty
+                ? _availableRoutes
+                : _availableRoutes.where((route) {
+                    final searchable =
+                        '${route.startLocation} ${route.endLocation}'
+                            .toLowerCase();
+                    return searchable.contains(query);
+                  }).toList();
+
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                20,
+                8,
+                20,
+                MediaQuery.of(context).viewInsets.bottom + 20,
               ),
-              const SizedBox(height: 8),
-              Text(
-                'اكتب وجهتك لنقترح عليك أقرب الرحلات.',
-                style: Theme.of(context).textTheme.bodyMedium,
-                textAlign: TextAlign.right,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                autofocus: true,
-                textAlign: TextAlign.right,
-                onChanged: (value) => destination = value,
-                decoration: const InputDecoration(
-                  labelText: 'الوجهة',
-                  prefixIcon: Icon(Icons.location_on_outlined),
-                ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () {
-                  final trimmedDestination = destination.trim();
-                  if (trimmedDestination.isEmpty) return;
-                  Navigator.pop(sheetContext);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'جارٍ البحث عن رحلات إلى $trimmedDestination',
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'إلى أين تريد الذهاب؟',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                    textAlign: TextAlign.right,
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    autofocus: true,
+                    textAlign: TextAlign.right,
+                    onChanged: (value) {
+                      setSheetState(() => destination = value);
+                    },
+                    decoration: const InputDecoration(
+                      labelText: 'ابحث عن وجهة أو خط سير',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  if (_availableRoutes.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Text(
+                        'لا توجد رحلات متاحة حالياً',
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  else if (results.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Text(
+                        'لم يتم العثور على رحلة بهذه الوجهة',
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  else
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 280),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: results.length,
+                        separatorBuilder: (_, _) => const Divider(height: 1),
+                        itemBuilder: (context, index) {
+                          final route = results[index];
+                          final routeIndex = _availableRoutes.indexOf(route);
+                          return ListTile(
+                            leading: const CircleAvatar(
+                              backgroundColor: AppTheme.primary,
+                              child: Icon(
+                                Icons.directions_bus,
+                                color: Colors.white,
+                              ),
+                            ),
+                            title: Text(
+                              '${route.startLocation} → ${route.endLocation}',
+                              textAlign: TextAlign.right,
+                            ),
+                            subtitle: Text(
+                              '${route.duration} دقيقة · ${route.fare.toStringAsFixed(0)} جنيه',
+                              textAlign: TextAlign.right,
+                            ),
+                            onTap: () => _selectRouteFromSearch(
+                              sheetContext,
+                              route,
+                              routeIndex,
+                            ),
+                          );
+                        },
                       ),
                     ),
-                  );
-                },
-                icon: const Icon(Icons.search),
-                label: const Text('البحث عن رحلة'),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
+      },
+    );
+  }
+
+  void _selectRouteFromSearch(
+    BuildContext sheetContext,
+    RouteModel route,
+    int routeIndex,
+  ) {
+    Navigator.pop(sheetContext);
+    _mapController?.animateCamera(
+      CameraUpdate.newLatLngZoom(_positionForRoute(routeIndex), 14.5),
+    );
+    Navigator.pushNamed(
+      context,
+      '/route_details',
+      arguments: {
+        'routeId': route.id,
+        'route': '${route.startLocation} - ${route.endLocation}',
+        'price': '${route.fare.toStringAsFixed(0)} جنيه',
+        'eta': '${route.duration} دقيقة',
       },
     );
   }
