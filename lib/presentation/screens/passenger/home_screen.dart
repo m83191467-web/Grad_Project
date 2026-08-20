@@ -56,6 +56,7 @@ class _DestinationPickerState extends State<_DestinationPicker> {
             : widget.initialRoutes;
         final loading = state is UserDataLoading && routes.isEmpty;
         final query = _query.trim().toLowerCase();
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         final results = routes.where((route) {
           if (query.isEmpty) return true;
           final searchable = '${route.startLocation} ${route.endLocation}'
@@ -74,9 +75,11 @@ class _DestinationPickerState extends State<_DestinationPicker> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'Where do you want to go?',
-                style: TextStyle(
+              Text(
+                Localizations.localeOf(context).languageCode == 'ar'
+                    ? 'إلى أين تريد الذهاب؟'
+                    : 'Where do you want to go?',
+                style: const TextStyle(
                   color: AppTheme.textPrimary,
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
@@ -92,8 +95,10 @@ class _DestinationPickerState extends State<_DestinationPicker> {
                 style: const TextStyle(color: AppTheme.textPrimary),
                 onChanged: (value) => setState(() => _query = value),
                 onSubmitted: (_) => FocusScope.of(context).unfocus(),
-                decoration: const InputDecoration(
-                  hintText: 'Search by starting point or destination',
+                decoration: InputDecoration(
+                  hintText: isArabic
+                      ? 'ابحث عن نقطة الانطلاق أو الوجهة'
+                      : 'Search by starting point or destination',
                   hintStyle: TextStyle(color: AppTheme.textLight),
                   prefixIcon: Icon(Icons.search, color: AppTheme.textSecondary),
                   enabledBorder: UnderlineInputBorder(
@@ -108,21 +113,40 @@ class _DestinationPickerState extends State<_DestinationPicker> {
               SizedBox(
                 height: 46,
                 child: ElevatedButton.icon(
-                  onPressed: () => setState(() => _query = _controller.text),
+                  onPressed: () {
+                    FocusScope.of(context).unfocus();
+                    setState(() => _query = _controller.text);
+                    final isArabic =
+                        Localizations.localeOf(context).languageCode == 'ar';
+                    final message = _controller.text.trim().isEmpty
+                        ? isArabic
+                            ? 'يتم عرض جميع الرحلات المتاحة.'
+                            : 'Showing all available routes.'
+                        : results.isEmpty
+                        ? isArabic
+                            ? 'لم يتم العثور على رحلات مطابقة.'
+                            : 'No matching routes found.'
+                        : isArabic
+                        ? 'تم العثور على ${results.length} رحلة.'
+                        : '${results.length} route(s) found.';
+                    ScaffoldMessenger.of(context)
+                      ..hideCurrentSnackBar()
+                      ..showSnackBar(SnackBar(content: Text(message)));
+                  },
                   icon: const Icon(Icons.search),
-                  label: const Text('Search'),
+                  label: Text(isArabic ? 'بحث' : 'Search'),
                 ),
               ),
               const SizedBox(height: 12),
               if (loading)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.all(20),
                   child: Column(
                     children: [
                       CircularProgressIndicator(),
                       SizedBox(height: 10),
                       Text(
-                        'Loading routes...',
+                        isArabic ? 'جاري تحميل الرحلات...' : 'Loading routes...',
                         style: TextStyle(color: AppTheme.textSecondary),
                       ),
                     ],
@@ -133,8 +157,10 @@ class _DestinationPickerState extends State<_DestinationPicker> {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      const Text(
-                        'Could not load routes',
+                      Text(
+                        isArabic
+                            ? 'تعذر تحميل الرحلات'
+                            : 'Could not load routes',
                         style: TextStyle(color: Color(0xFFFF9A8B)),
                       ),
                       const SizedBox(height: 8),
@@ -143,25 +169,29 @@ class _DestinationPickerState extends State<_DestinationPicker> {
                           const FetchAvailableRoutesRequested(),
                         ),
                         icon: const Icon(Icons.refresh),
-                        label: const Text('Try again'),
+                        label: Text(isArabic ? 'حاول مرة أخرى' : 'Try again'),
                       ),
                     ],
                   ),
                 )
               else if (routes.isEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.all(16),
                   child: Text(
-                    'No routes are available yet.',
+                    isArabic
+                        ? 'لا توجد رحلات متاحة حاليًا.'
+                        : 'No routes are available yet.',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: AppTheme.textSecondary),
                   ),
                 )
               else if (results.isEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.all(16),
                   child: Text(
-                    'No matching routes found.',
+                    isArabic
+                        ? 'لم يتم العثور على رحلات مطابقة.'
+                        : 'No matching routes found.',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: AppTheme.textSecondary),
                   ),
@@ -245,8 +275,16 @@ class _MapPlaceSearchSheetState extends State<_MapPlaceSearchSheet> {
       _isSearching = true;
       _errorMessage = null;
     });
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text(isArabic ? 'جارٍ البحث...' : 'Searching...')),
+      );
     final errorMessage = await widget.onSearch(searchQuery, isPickup);
     if (!mounted) return;
+
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
     if (errorMessage == null) {
       Navigator.of(context).pop();
@@ -591,10 +629,17 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
         );
       }
       if (!mounted) return 'The screen is no longer available.';
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            isPickup ? 'Pickup point selected.' : 'Destination point selected.',
+            isPickup
+                ? isArabic
+                    ? 'تم تحديد نقطة الانطلاق.'
+                    : 'Pickup point selected.'
+                : isArabic
+                ? 'تم تحديد الوجهة.'
+                : 'Destination point selected.',
           ),
         ),
       );
