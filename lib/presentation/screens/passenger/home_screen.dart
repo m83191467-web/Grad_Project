@@ -635,6 +635,14 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   }
 
   void _showDestinationPicker() {
+    // The routes may have loaded before the map listener was attached.
+    // Always synchronize the picker with the latest Bloc state before it
+    // calculates search results.
+    final currentState = context.read<UserDataBloc>().state;
+    if (currentState is RoutesLoaded) {
+      _availableRoutes = currentState.routes;
+    }
+
     var destination = '';
     showModalBottomSheet<void>(
       context: context,
@@ -673,12 +681,26 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                   TextField(
                     autofocus: true,
                     textAlign: TextAlign.right,
+                    textInputAction: TextInputAction.search,
                     onChanged: (value) {
                       setSheetState(() => destination = value);
                     },
+                    onSubmitted: (_) => setSheetState(() {}),
                     decoration: const InputDecoration(
                       labelText: 'ابحث عن وجهة أو خط سير',
                       prefixIcon: Icon(Icons.search),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 46,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        FocusScope.of(context).unfocus();
+                        setSheetState(() {});
+                      },
+                      icon: const Icon(Icons.search),
+                      label: const Text('Search'),
                     ),
                   ),
                   const SizedBox(height: 12),
