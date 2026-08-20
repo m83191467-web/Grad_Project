@@ -205,6 +205,93 @@ class _DestinationPickerState extends State<_DestinationPicker> {
   }
 }
 
+class _MapPlaceSearchSheet extends StatefulWidget {
+  const _MapPlaceSearchSheet({
+    required this.initialIsPickup,
+    required this.onSearch,
+  });
+
+  final bool initialIsPickup;
+  final Future<void> Function(String query, bool isPickup) onSearch;
+
+  @override
+  State<_MapPlaceSearchSheet> createState() => _MapPlaceSearchSheetState();
+}
+
+class _MapPlaceSearchSheetState extends State<_MapPlaceSearchSheet> {
+  final _controller = TextEditingController();
+  late bool _isPickup = widget.initialIsPickup;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit([String? query]) async {
+    final searchQuery = (query ?? _controller.text).trim();
+    final isPickup = _isPickup;
+    Navigator.of(context).pop();
+    await widget.onSearch(searchQuery, isPickup);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        20,
+        20,
+        MediaQuery.viewInsetsOf(context).bottom + 20,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Search on map', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 12),
+          SegmentedButton<bool>(
+            segments: const [
+              ButtonSegment(
+                value: true,
+                label: Text('Pickup'),
+                icon: Icon(Icons.trip_origin),
+              ),
+              ButtonSegment(
+                value: false,
+                label: Text('Destination'),
+                icon: Icon(Icons.location_on),
+              ),
+            ],
+            selected: {_isPickup},
+            onSelectionChanged: (selection) =>
+                setState(() => _isPickup = selection.first),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            textInputAction: TextInputAction.search,
+            onSubmitted: _submit,
+            decoration: const InputDecoration(
+              hintText: 'Search city, street, or landmark',
+              prefixIcon: Icon(Icons.search),
+            ),
+          ),
+          const SizedBox(height: 14),
+          FilledButton.icon(
+            onPressed: _submit,
+            icon: const Icon(Icons.search),
+            label: Text(
+              _isPickup ? 'Set pickup point' : 'Set destination point',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   int _selectedIndex = 0;
   late final Set<Marker> _markers = {};
@@ -483,76 +570,14 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   }
 
   void _showMapPlaceSearch() {
-    final controller = TextEditingController();
-    var isPickup = _pickupPoint == null;
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      builder: (sheetContext) => StatefulBuilder(
-        builder: (context, setSheetState) => Padding(
-          padding: EdgeInsets.fromLTRB(
-            20,
-            20,
-            20,
-            MediaQuery.viewInsetsOf(context).bottom + 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Search on map',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 12),
-              SegmentedButton<bool>(
-                segments: const [
-                  ButtonSegment(
-                    value: true,
-                    label: Text('Pickup'),
-                    icon: Icon(Icons.trip_origin),
-                  ),
-                  ButtonSegment(
-                    value: false,
-                    label: Text('Destination'),
-                    icon: Icon(Icons.location_on),
-                  ),
-                ],
-                selected: {isPickup},
-                onSelectionChanged: (selection) =>
-                    setSheetState(() => isPickup = selection.first),
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: controller,
-                autofocus: true,
-                textInputAction: TextInputAction.search,
-                onSubmitted: (value) async {
-                  Navigator.pop(sheetContext);
-                  await _searchAndSetPoint(value, isPickup);
-                },
-                decoration: const InputDecoration(
-                  hintText: 'Search city, street, or landmark',
-                  prefixIcon: Icon(Icons.search),
-                ),
-              ),
-              const SizedBox(height: 14),
-              FilledButton.icon(
-                onPressed: () async {
-                  final query = controller.text;
-                  Navigator.pop(sheetContext);
-                  await _searchAndSetPoint(query, isPickup);
-                },
-                icon: const Icon(Icons.search),
-                label: Text(
-                  isPickup ? 'Set pickup point' : 'Set destination point',
-                ),
-              ),
-            ],
-          ),
-        ),
+      builder: (_) => _MapPlaceSearchSheet(
+        initialIsPickup: _pickupPoint == null,
+        onSearch: _searchAndSetPoint,
       ),
-    ).whenComplete(controller.dispose);
+    );
   }
 
   @override
