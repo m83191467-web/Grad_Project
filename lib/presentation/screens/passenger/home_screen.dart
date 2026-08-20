@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -212,7 +215,7 @@ class _MapPlaceSearchSheet extends StatefulWidget {
   });
 
   final bool initialIsPickup;
-  final Future<void> Function(String query, bool isPickup) onSearch;
+  final Future<String?> Function(String query, bool isPickup) onSearch;
 
   @override
   State<_MapPlaceSearchSheet> createState() => _MapPlaceSearchSheetState();
@@ -221,6 +224,8 @@ class _MapPlaceSearchSheet extends StatefulWidget {
 class _MapPlaceSearchSheetState extends State<_MapPlaceSearchSheet> {
   final _controller = TextEditingController();
   late bool _isPickup = widget.initialIsPickup;
+  bool _isSearching = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -230,9 +235,27 @@ class _MapPlaceSearchSheetState extends State<_MapPlaceSearchSheet> {
 
   Future<void> _submit([String? query]) async {
     final searchQuery = (query ?? _controller.text).trim();
+    if (searchQuery.isEmpty) {
+      setState(() => _errorMessage = 'Enter a city, street, or landmark.');
+      return;
+    }
+
     final isPickup = _isPickup;
-    Navigator.of(context).pop();
-    await widget.onSearch(searchQuery, isPickup);
+    setState(() {
+      _isSearching = true;
+      _errorMessage = null;
+    });
+    final errorMessage = await widget.onSearch(searchQuery, isPickup);
+    if (!mounted) return;
+
+    if (errorMessage == null) {
+      Navigator.of(context).pop();
+      return;
+    }
+    setState(() {
+      _isSearching = false;
+      _errorMessage = errorMessage;
+    });
   }
 
   @override
@@ -272,18 +295,36 @@ class _MapPlaceSearchSheetState extends State<_MapPlaceSearchSheet> {
             controller: _controller,
             autofocus: true,
             textInputAction: TextInputAction.search,
-            onSubmitted: _submit,
+            enabled: !_isSearching,
+            onSubmitted: _isSearching ? null : _submit,
             decoration: const InputDecoration(
               hintText: 'Search city, street, or landmark',
               prefixIcon: Icon(Icons.search),
             ),
           ),
           const SizedBox(height: 14),
+          if (_errorMessage != null) ...[
+            Text(
+              _errorMessage!,
+              style: const TextStyle(color: AppTheme.danger),
+            ),
+            const SizedBox(height: 14),
+          ],
           FilledButton.icon(
-            onPressed: _submit,
-            icon: const Icon(Icons.search),
+            onPressed: _isSearching ? null : _submit,
+            icon: _isSearching
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.search),
             label: Text(
-              _isPickup ? 'Set pickup point' : 'Set destination point',
+              _isSearching
+                  ? 'Searching...'
+                  : _isPickup
+                  ? 'Set pickup point'
+                  : 'Set destination point',
             ),
           ),
         ],
@@ -506,9 +547,11 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
     });
   }
 
-  Future<void> _searchAndSetPoint(String query, bool isPickup) async {
+  Future<String?> _searchAndSetPoint(String query, bool isPickup) async {
     final trimmedQuery = query.trim();
-    if (trimmedQuery.isEmpty) return;
+    if (trimmedQuery.isEmpty) {
+      return 'Enter a city, street, or landmark.';
+    }
 
     try {
       final results = await _geocoding
@@ -518,6 +561,8 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
 
       final result = results.first;
       final point = LatLng(result.latitude, result.longitude);
+      if (!mounted) return 'The screen is no longer available.';
+
       setState(() {
         if (isPickup) {
           _pickupPoint = point;
@@ -545,27 +590,21 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
           CameraUpdate.newLatLngZoom(point, 15),
         );
       }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              isPickup
-                  ? 'Pickup point selected.'
-                  : 'Destination point selected.',
-            ),
+      if (!mounted) return 'The screen is no longer available.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isPickup ? 'Pickup point selected.' : 'Destination point selected.',
           ),
-        );
-      }
+        ),
+      );
+      return null;
+    } on TimeoutException {
+      return 'Search timed out. Check your connection and try again.';
+    } on PlatformException {
+      return 'The device geocoder is unavailable. Fully restart the app and try again.';
     } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Place not found. Try a more specific address or pin it on the map.',
-            ),
-          ),
-        );
-      }
+      return 'Place not found. Try a more specific address or pin it on the map.';
     }
   }
 
