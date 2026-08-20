@@ -292,7 +292,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
     _markers.clear();
     for (int i = 0; i < routes.length; i++) {
       final route = routes[i];
-      final position = _positionForRoute(i);
+      final position = _positionForRoute(i, route.location);
 
       _markers.add(
         Marker(
@@ -312,7 +312,10 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
     }
   }
 
-  LatLng _positionForRoute(int index) {
+  LatLng _positionForRoute(int index, [GeoPoint? location]) {
+    if (location != null) {
+      return LatLng(location.latitude, location.longitude);
+    }
     return LatLng(15.5007 + (index * 0.02), 32.5599 + (index * 0.02));
   }
 

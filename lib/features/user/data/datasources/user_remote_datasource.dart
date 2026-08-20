@@ -101,7 +101,8 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
           .collection('trips')
           .where('passengerId', isEqualTo: userId)
           .orderBy('tripDate', descending: true)
-          .get();
+          .get()
+          .timeout(const Duration(seconds: 15));
       return snapshot.docs
           .map((doc) => TripModel.fromMap(doc.data(), doc.id))
           .toList();

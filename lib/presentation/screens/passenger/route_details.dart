@@ -7,8 +7,6 @@ import '../../../core/theme/app_theme.dart';
 import '../../../features/trip/presentation/bloc/trip_bloc.dart';
 import '../../../features/trip/presentation/bloc/trip_event.dart';
 import '../../../features/trip/presentation/bloc/trip_state.dart';
-import '../../../features/user/presentation/bloc/user_data_bloc.dart';
-import '../../../features/user/presentation/bloc/user_data_event.dart';
 
 class RouteDetailsScreen extends StatefulWidget {
   final String? routeId;
@@ -52,9 +50,6 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
         fare: _fare,
       ),
     );
-    context.read<UserDataBloc>().add(
-      BookTripRequested(userId, widget.routeId ?? 'route_demo'),
-    );
   }
 
   @override
@@ -65,11 +60,7 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
           setState(() => _isBooking = true);
         } else if (state is TripBooked) {
           setState(() => _isBooking = false);
-          Navigator.pushReplacementNamed(
-            context,
-            '/trip_tracking',
-            arguments: state.tripId,
-          );
+          _showBookingConfirmation(state.tripId);
         } else if (state is TripError) {
           setState(() => _isBooking = false);
           ScaffoldMessenger.of(
@@ -139,6 +130,30 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _showBookingConfirmation(String tripId) async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        icon: const Icon(Icons.check_circle, color: AppTheme.success, size: 52),
+        title: const Text('Trip booked'),
+        content: const Text('Your seat has been reserved successfully.'),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Track trip'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    Navigator.pushReplacementNamed(
+      context,
+      '/trip_tracking',
+      arguments: tripId,
     );
   }
 

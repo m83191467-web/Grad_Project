@@ -104,11 +104,13 @@ class TripBloc extends Bloc<TripEvent, TripState> {
   Future<void> _onBookTrip(BookTripEvent event, Emitter<TripState> emit) async {
     emit(const TripLoading());
     try {
-      final trip = await _tripRepository.bookTrip(
-        passengerId: event.userId,
-        routeId: event.routeId,
-        fare: event.fare,
-      );
+      final trip = await _tripRepository
+          .bookTrip(
+            passengerId: event.userId,
+            routeId: event.routeId,
+            fare: event.fare,
+          )
+          .timeout(const Duration(seconds: 15));
       emit(
         TripBooked(
           tripId: trip.id,
@@ -127,7 +129,9 @@ class TripBloc extends Bloc<TripEvent, TripState> {
   ) async {
     emit(const TripLoading());
     try {
-      final trips = await _tripRepository.fetchPassengerTrips(event.userId);
+      final trips = await _tripRepository
+          .fetchPassengerTrips(event.userId)
+          .timeout(const Duration(seconds: 15));
       emit(TripsLoaded(trips: trips));
     } catch (e) {
       emit(TripError(message: 'Failed to fetch trips: $e'));
@@ -140,7 +144,9 @@ class TripBloc extends Bloc<TripEvent, TripState> {
   ) async {
     emit(const TripLoading());
     try {
-      await _tripRepository.updateStatus(event.tripId, 'cancelled');
+      await _tripRepository
+          .updateStatus(event.tripId, 'cancelled')
+          .timeout(const Duration(seconds: 15));
       emit(TripCancelled(tripId: event.tripId));
     } catch (e) {
       emit(TripError(message: 'Failed to cancel trip: $e'));
@@ -150,7 +156,9 @@ class TripBloc extends Bloc<TripEvent, TripState> {
   Future<void> _onRateTrip(RateTripEvent event, Emitter<TripState> emit) async {
     emit(const TripLoading());
     try {
-      await _tripRepository.rateTrip(event.tripId, event.rating);
+      await _tripRepository
+          .rateTrip(event.tripId, event.rating)
+          .timeout(const Duration(seconds: 15));
       emit(TripRated(tripId: event.tripId, rating: event.rating));
     } catch (e) {
       emit(TripError(message: 'Failed to rate trip: $e'));

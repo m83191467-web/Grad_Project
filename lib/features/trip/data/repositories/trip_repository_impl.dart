@@ -5,7 +5,6 @@ import '../../domain/repositories/trip_repository.dart';
 
 class TripRepositoryImpl implements TripRepository {
   final FirebaseFirestore _firestore;
-  final List<TripModel> _localTrips = [];
 
   TripRepositoryImpl({FirebaseFirestore? firestore})
     : _firestore = firestore ?? FirebaseFirestore.instance;
@@ -16,29 +15,43 @@ class TripRepositoryImpl implements TripRepository {
     required String routeId,
     required double fare,
   }) async {
-    final now = DateTime.now();
-    final reference = _firestore.collection('trips').doc();
-    final trip = TripModel(
-      id: reference.id,
-      passengerId: passengerId,
-      routeId: routeId,
-      driverId: '',
-      tripDate: now,
-      fareAmount: fare,
-      status: 'pending',
-      createdAt: now,
-      paymentMethod: 'cash',
-    );
-    try {
-      await reference.set({
-        ...trip.toMap(),
-        'tripDate': Timestamp.fromDate(now),
-        'createdAt': Timestamp.fromDate(now),
+    final routeRef = _firestore.collection('routes').doc(routeId);
+    late TripModel bookedTrip;
+
+    await _firestore.runTransaction((transaction) async {
+      final routeDoc = await transaction.get(routeRef);
+      if (!routeDoc.exists) throw StateError('Route not found');
+
+      final route = routeDoc.data() ?? <String, dynamic>{};
+      final seats = (route['availableSeats'] as num?)?.toInt() ?? 0;
+      if (seats <= 0) throw StateError('No seats are available');
+
+      final reference = _firestore.collection('trips').doc();
+      final now = DateTime.now();
+      final departure = route['departureTime'] is Timestamp
+          ? (route['departureTime'] as Timestamp).toDate()
+          : now;
+      final routeFare = (route['fare'] as num?)?.toDouble() ?? fare;
+      bookedTrip = TripModel(
+        id: reference.id,
+        passengerId: passengerId,
+        routeId: routeId,
+        driverId: route['driverId']?.toString() ?? '',
+        tripDate: departure,
+        fareAmount: routeFare,
+        status: 'pending',
+        createdAt: now,
+        paymentMethod: 'cash',
+      );
+      transaction.set(reference, {
+        ...bookedTrip.toMap(),
+        'tripDate': Timestamp.fromDate(departure),
+        'createdAt': FieldValue.serverTimestamp(),
       });
-    } catch (_) {
-      _localTrips.insert(0, trip);
-    }
-    return trip;
+      transaction.update(routeRef, {'availableSeats': seats - 1});
+    });
+
+    return bookedTrip;
   }
 
   @override
@@ -52,10 +65,8 @@ class TripRepositoryImpl implements TripRepository {
       return snapshot.docs
           .map((doc) => TripModel.fromMap(doc.data(), doc.id))
           .toList();
-    } catch (_) {
-      return _localTrips
-          .where((trip) => trip.passengerId == passengerId)
-          .toList();
+    } catch (error) {
+      throw StateError('Could not load trip history: $error');
     }
   }
 
@@ -65,23 +76,8 @@ class TripRepositoryImpl implements TripRepository {
       await _firestore.collection('trips').doc(tripId).update({
         'status': status,
       });
-    } catch (_) {
-      final index = _localTrips.indexWhere((trip) => trip.id == tripId);
-      if (index >= 0) {
-        final current = _localTrips[index];
-        _localTrips[index] = TripModel(
-          id: current.id,
-          passengerId: current.passengerId,
-          routeId: current.routeId,
-          driverId: current.driverId,
-          tripDate: current.tripDate,
-          fareAmount: current.fareAmount,
-          status: status,
-          createdAt: current.createdAt,
-          paymentMethod: current.paymentMethod,
-          rating: current.rating,
-        );
-      }
+    } catch (error) {
+      throw StateError('Could not update trip status: $error');
     }
   }
 
@@ -91,6 +87,8 @@ class TripRepositoryImpl implements TripRepository {
       await _firestore.collection('trips').doc(tripId).update({
         'rating': rating,
       });
-    } catch (_) {}
+    } catch (error) {
+      throw StateError('Could not rate trip: $error');
+    }
   }
 }

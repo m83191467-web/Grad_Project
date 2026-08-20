@@ -11,6 +11,7 @@ class RouteModel {
   final String driverId;
   final DateTime departureTime;
   final String status; // active, completed, cancelled
+  final GeoPoint? location;
 
   RouteModel({
     required this.id,
@@ -23,6 +24,7 @@ class RouteModel {
     required this.driverId,
     required this.departureTime,
     required this.status,
+    this.location,
   });
 
   factory RouteModel.fromMap(Map<String, dynamic> map, String id) {
@@ -35,8 +37,9 @@ class RouteModel {
 
     return RouteModel(
       id: id,
-      startLocation: map['startLocation']?.toString() ?? '',
-      endLocation: map['endLocation']?.toString() ?? '',
+      startLocation:
+          (map['startLocation'] ?? map['startPoint'])?.toString() ?? '',
+      endLocation: (map['endLocation'] ?? map['destination'])?.toString() ?? '',
       distance: _asDouble(map['distance']),
       duration: _asInt(map['duration']),
       fare: _asDouble(map['fare']),
@@ -44,6 +47,7 @@ class RouteModel {
       driverId: map['driverId']?.toString() ?? '',
       departureTime: parsedDeparture,
       status: map['status']?.toString() ?? 'active',
+      location: _asGeoPoint(map['location']),
     );
   }
 
@@ -57,10 +61,24 @@ class RouteModel {
     return int.tryParse(value?.toString() ?? '') ?? 0;
   }
 
+  static GeoPoint? _asGeoPoint(dynamic value) {
+    if (value is GeoPoint) return value;
+    if (value is Map) {
+      final latitude = _asDouble(value['latitude'] ?? value['lat']);
+      final longitude = _asDouble(value['longitude'] ?? value['lng']);
+      if (latitude != 0 || longitude != 0) {
+        return GeoPoint(latitude, longitude);
+      }
+    }
+    return null;
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'startLocation': startLocation,
       'endLocation': endLocation,
+      'startPoint': startLocation,
+      'destination': endLocation,
       'distance': distance,
       'duration': duration,
       'fare': fare,
@@ -68,6 +86,7 @@ class RouteModel {
       'driverId': driverId,
       'departureTime': departureTime,
       'status': status,
+      if (location != null) 'location': location,
     };
   }
 }

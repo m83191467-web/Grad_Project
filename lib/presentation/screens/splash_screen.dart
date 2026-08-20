@@ -34,6 +34,14 @@ class _SplashScreenState extends State<SplashScreen>
       curve: Curves.easeOutBack,
     );
     _controller.forward();
+    Future<void>.delayed(const Duration(seconds: 12), () {
+      if (!mounted || _navigationHandled) return;
+      final state = context.read<AuthBloc>().state;
+      if (state is AuthLoading) {
+        _navigationHandled = true;
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    });
   }
 
   @override
