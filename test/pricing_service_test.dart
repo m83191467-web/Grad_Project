@@ -30,4 +30,15 @@ void main() {
   test('rejects invalid coupons without changing the fare', () {
     expect(pricing.applyCoupon(fare: 100, discountPercent: 120), 100);
   });
+
+  test('does not allow a negative coupon discount', () {
+    expect(pricing.applyCoupon(fare: 100, discountPercent: -10), 100);
+  });
+
+  test('never returns a negative total fare', () {
+    expect(
+      pricing.calculateTotalFare(baseFare: 50, discount: 100),
+      50,
+    );
+  });
 }
