@@ -204,21 +204,26 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
             ),
           ],
         ),
-        child: TextField(
-          textAlign: TextAlign.right,
-          readOnly: true,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
           onTap: _showDestinationPicker,
-          decoration: InputDecoration(
-            hintText: AppStrings.searchRoute,
-            border: InputBorder.none,
-            prefixIcon: const Icon(
-              Icons.search,
-              color: AppTheme.textLight,
-              size: 20,
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 12,
+          child: AbsorbPointer(
+            child: TextField(
+              textAlign: TextAlign.right,
+              readOnly: true,
+              decoration: InputDecoration(
+                hintText: AppStrings.searchRoute,
+                border: InputBorder.none,
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: AppTheme.textLight,
+                  size: 20,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+              ),
             ),
           ),
         ),
