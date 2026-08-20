@@ -207,10 +207,13 @@ class _DestinationPickerState extends State<_DestinationPicker> {
 class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   int _selectedIndex = 0;
   late final Set<Marker> _markers = {};
+  final Set<Polyline> _selectedRoutePolylines = {};
   GoogleMapController? _mapController;
   List<RouteModel> _availableRoutes = [];
   late final Future<UserModel?> _userProfileFuture;
   bool _showWelcomeCard = true;
+  LatLng? _pickupPoint;
+  LatLng? _destinationPoint;
 
   static const CameraPosition _initialPosition = CameraPosition(
     target: LatLng(15.5007, 32.5599),
@@ -319,6 +322,101 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
     return LatLng(15.5007 + (index * 0.02), 32.5599 + (index * 0.02));
   }
 
+  Set<Marker> get _mapMarkers => {
+    ..._markers,
+    if (_pickupPoint != null)
+      Marker(
+        markerId: const MarkerId('selected_pickup'),
+        position: _pickupPoint!,
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+        infoWindow: const InfoWindow(title: 'Pickup point'),
+      ),
+    if (_destinationPoint != null)
+      Marker(
+        markerId: const MarkerId('selected_destination'),
+        position: _destinationPoint!,
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+        infoWindow: const InfoWindow(title: 'Destination point'),
+      ),
+  };
+
+  void _handleMapTap(LatLng point) {
+    setState(() {
+      if (_pickupPoint == null || _destinationPoint != null) {
+        _pickupPoint = point;
+        _destinationPoint = null;
+        _selectedRoutePolylines.clear();
+      } else {
+        _destinationPoint = point;
+        _selectedRoutePolylines
+          ..clear()
+          ..add(
+            Polyline(
+              polylineId: const PolylineId('selected_route'),
+              points: [_pickupPoint!, _destinationPoint!],
+              color: AppTheme.primary,
+              width: 6,
+              geodesic: true,
+            ),
+          );
+      }
+    });
+
+    if (_destinationPoint == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Pickup selected. Tap the map to set your destination.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    _fitSelectedRoute();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Route is ready. Choose a listed route to continue.'),
+      ),
+    );
+  }
+
+  Future<void> _fitSelectedRoute() async {
+    final pickup = _pickupPoint;
+    final destination = _destinationPoint;
+    if (pickup == null || destination == null || _mapController == null) return;
+
+    final bounds = LatLngBounds(
+      southwest: LatLng(
+        pickup.latitude < destination.latitude
+            ? pickup.latitude
+            : destination.latitude,
+        pickup.longitude < destination.longitude
+            ? pickup.longitude
+            : destination.longitude,
+      ),
+      northeast: LatLng(
+        pickup.latitude > destination.latitude
+            ? pickup.latitude
+            : destination.latitude,
+        pickup.longitude > destination.longitude
+            ? pickup.longitude
+            : destination.longitude,
+      ),
+    );
+    await _mapController!.animateCamera(
+      CameraUpdate.newLatLngBounds(bounds, 70),
+    );
+  }
+
+  void _clearSelectedRoute() {
+    setState(() {
+      _pickupPoint = null;
+      _destinationPoint = null;
+      _selectedRoutePolylines.clear();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -358,13 +456,62 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                         });
                       }
                     },
-                    child: GoogleMap(
-                      initialCameraPosition: _initialPosition,
-                      markers: _markers,
-                      myLocationEnabled: true,
-                      myLocationButtonEnabled: true,
-                      mapType: MapType.normal,
-                      onMapCreated: (controller) => _mapController = controller,
+                    child: Stack(
+                      children: [
+                        GoogleMap(
+                          initialCameraPosition: _initialPosition,
+                          markers: _mapMarkers,
+                          polylines: _selectedRoutePolylines,
+                          myLocationEnabled: true,
+                          myLocationButtonEnabled: true,
+                          mapType: MapType.normal,
+                          onTap: _handleMapTap,
+                          onMapCreated: (controller) =>
+                              _mapController = controller,
+                        ),
+                        Positioned(
+                          top: 12,
+                          left: 12,
+                          right: 12,
+                          child: Material(
+                            color: Colors.white.withValues(alpha: 0.94),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 9,
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.touch_app_outlined,
+                                    color: AppTheme.primary,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      _pickupPoint == null
+                                          ? 'Tap the map to set your pickup point'
+                                          : _destinationPoint == null
+                                          ? 'Now tap the map to set your destination'
+                                          : 'Your selected route is shown on the map',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  if (_pickupPoint != null)
+                                    IconButton(
+                                      tooltip: 'Clear route',
+                                      onPressed: _clearSelectedRoute,
+                                      icon: const Icon(Icons.close),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
