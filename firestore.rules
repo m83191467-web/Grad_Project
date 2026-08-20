@@ -15,6 +15,10 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'admin';
     }
 
+    function unchanged(field) {
+      return request.resource.data[field] == resource.data[field];
+    }
+
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId);
@@ -35,9 +39,13 @@ service cloud.firestore {
          resource.data.driverId == request.auth.uid || isAdmin());
       allow create: if signedIn() &&
         request.resource.data.passengerId == request.auth.uid;
-      allow update: if signedIn() &&
-        (resource.data.passengerId == request.auth.uid ||
-         resource.data.driverId == request.auth.uid || isAdmin());
+      allow update: if isAdmin() ||
+        (signedIn() && resource.data.passengerId == request.auth.uid &&
+         unchanged('passengerId') && unchanged('driverId') &&
+         unchanged('fareAmount') && unchanged('createdAt')) ||
+        (signedIn() && resource.data.driverId == request.auth.uid &&
+         unchanged('passengerId') && unchanged('driverId') &&
+         unchanged('fareAmount') && unchanged('createdAt'));
       allow delete: if isAdmin();
     }
 

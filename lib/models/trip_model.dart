@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class TripModel {
   final String id;
   final String passengerId;
@@ -29,17 +31,20 @@ class TripModel {
       passengerId: map['passengerId'] ?? '',
       routeId: map['routeId'] ?? '',
       driverId: map['driverId'] ?? '',
-      tripDate: map['tripDate'] is DateTime
-          ? map['tripDate']
-          : DateTime.parse(map['tripDate'] ?? DateTime.now().toString()),
+      tripDate: _dateFrom(map['tripDate']),
       fareAmount: (map['fareAmount'] ?? 0).toDouble(),
       status: map['status'] ?? 'pending',
-      createdAt: map['createdAt'] is DateTime
-          ? map['createdAt']
-          : DateTime.parse(map['createdAt'] ?? DateTime.now().toString()),
+      createdAt: _dateFrom(map['createdAt']),
       paymentMethod: map['paymentMethod'],
       rating: map['rating'] != null ? (map['rating']).toDouble() : null,
     );
+  }
+
+  static DateTime _dateFrom(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+    return DateTime.now();
   }
 
   Map<String, dynamic> toMap() {
