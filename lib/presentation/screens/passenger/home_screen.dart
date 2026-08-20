@@ -6,11 +6,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../data/services/location_service.dart';
 import '../../../features/user/presentation/bloc/user_data_bloc.dart';
 import '../../../features/user/presentation/bloc/user_data_event.dart';
 import '../../../features/user/presentation/bloc/user_data_state.dart';
@@ -382,6 +382,8 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   LatLng? _pickupPoint;
   LatLng? _destinationPoint;
   final Geocoding _geocoding = Geocoding();
+  final LocationService _locationService = LocationService();
+  bool _locationEnabled = false;
 
   static const CameraPosition _initialPosition = CameraPosition(
     target: LatLng(15.5007, 32.5599),
@@ -421,14 +423,10 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
 
   Future<void> _requestLocationPermission() async {
     try {
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          _showPermissionDeniedSnackbar();
-        }
-      }
-      if (permission == LocationPermission.deniedForever) {
+      final enabled = await _locationService.requestPermissions();
+      if (!mounted) return;
+      setState(() => _locationEnabled = enabled);
+      if (!enabled) {
         _showPermissionDeniedSnackbar();
       }
     } catch (e) {
@@ -709,8 +707,8 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                           initialCameraPosition: _initialPosition,
                           markers: _mapMarkers,
                           polylines: _selectedRoutePolylines,
-                          myLocationEnabled: true,
-                          myLocationButtonEnabled: true,
+                          myLocationEnabled: _locationEnabled,
+                          myLocationButtonEnabled: _locationEnabled,
                           mapType: MapType.normal,
                           onTap: _handleMapTap,
                           onMapCreated: (controller) =>

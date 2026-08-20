@@ -12,6 +12,10 @@ class LocationService {
   /// Request location permissions
   Future<bool> requestPermissions() async {
     try {
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        return false;
+      }
+
       final permission = await Geolocator.checkPermission();
 
       if (permission == LocationPermission.deniedForever) {
@@ -34,6 +38,7 @@ class LocationService {
   /// Get current location
   Future<Position?> getCurrentLocation() async {
     try {
+      if (!await Geolocator.isLocationServiceEnabled()) return null;
       final hasPermission = await requestPermissions();
       if (!hasPermission) return null;
 
