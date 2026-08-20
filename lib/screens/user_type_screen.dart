@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
 import 'help_screen.dart';
+import '../core/widgets/space_background.dart';
 
 class UserTypeScreen extends StatelessWidget {
   const UserTypeScreen({super.key});
@@ -8,10 +9,10 @@ class UserTypeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
 
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
 
         elevation: 0,
 
@@ -58,7 +59,7 @@ class UserTypeScreen extends StatelessWidget {
               );
             },
 
-            icon: const Icon(Icons.language, color: Colors.black),
+            icon: const Icon(Icons.language, color: Colors.white),
           ),
 
           // زر الدعم
@@ -71,84 +72,86 @@ class UserTypeScreen extends StatelessWidget {
               );
             },
 
-            icon: const Icon(Icons.help_outline, color: Colors.black),
+            icon: const Icon(Icons.help_outline, color: Colors.white),
           ),
         ],
       ),
 
-      body: Padding(
-        padding: const EdgeInsets.all(24),
+      body: SpaceBackground(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
 
-        child: Column(
-          children: [
-            const SizedBox(height: 30),
+          child: Column(
+            children: [
+              const SizedBox(height: 30),
 
-            Image.asset("assets/images/logo.png", width: 120),
+              Image.asset("assets/images/logo.png", width: 120),
 
-            const SizedBox(height: 30),
+              const SizedBox(height: 30),
 
-            const Text(
-              "Welcome to Navio",
+              const Text(
+                "Welcome to Navio",
 
-              style: TextStyle(
-                fontSize: 28,
+                style: TextStyle(
+                  fontSize: 28,
 
-                fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.bold,
 
-                color: Colors.black,
+                  color: Colors.white,
+                ),
               ),
-            ),
 
-            const SizedBox(height: 10),
+              const SizedBox(height: 10),
 
-            const Text(
-              "اختر نوع المستخدم",
+              const Text(
+                "اختر نوع المستخدم",
 
-              style: TextStyle(fontSize: 18, color: Colors.grey),
-            ),
+                style: TextStyle(fontSize: 18, color: Colors.grey),
+              ),
 
-            const SizedBox(height: 50),
+              const SizedBox(height: 50),
 
-            // الراكب
-            userCard(
-              icon: Icons.person_outline,
+              // الراكب
+              userCard(
+                icon: Icons.person_outline,
 
-              title: "Passenger",
+                title: "Passenger",
 
-              subtitle: "راكب",
+                subtitle: "راكب",
 
-              onTap: () {
-                Navigator.push(
-                  context,
+                onTap: () {
+                  Navigator.push(
+                    context,
 
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                );
-              },
-            ),
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  );
+                },
+              ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            // السائق
-            userCard(
-              icon: Icons.directions_bus_outlined,
+              // السائق
+              userCard(
+                icon: Icons.directions_bus_outlined,
 
-              title: "Driver",
+                title: "Driver",
 
-              subtitle: "سائق",
+                subtitle: "سائق",
 
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Driver screen coming soon")),
-                );
-              },
-            ),
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Driver screen coming soon")),
+                  );
+                },
+              ),
 
-            const Spacer(),
+              const Spacer(),
 
-            const Text("Navio © 2026", style: TextStyle(color: Colors.grey)),
+              const Text("Navio © 2026", style: TextStyle(color: Colors.grey)),
 
-            const SizedBox(height: 15),
-          ],
+              const SizedBox(height: 15),
+            ],
+          ),
         ),
       ),
     );

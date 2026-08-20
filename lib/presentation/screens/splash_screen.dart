@@ -95,57 +95,59 @@ class _SplashScreenState extends State<SplashScreen>
             systemNavigationBarIconBrightness: Brightness.light,
           ),
           child: Scaffold(
-            backgroundColor: const Color(0xFF1976D2),
-            body: Container(
-              width: double.infinity,
-              height: double.infinity,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFF1976D2), Color(0xFF535AFF)],
-                ),
-              ),
-              child: Center(
-                child: ScaleTransition(
-                  scale: _animation,
-                  child: Container(
-                    width: 181,
-                    height: 181,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Color(0xFF1976D2), Color(0xFF535AFF)],
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x40000000),
-                          blurRadius: 10,
-                          offset: Offset(4, 4),
-                        ),
-                        BoxShadow(
-                          color: Color(0x66BDBDBD),
-                          blurRadius: 10,
-                          offset: Offset(-4, -4),
-                        ),
-                      ],
+            backgroundColor: const Color(0xFF020B15),
+            body: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset('assets/images/space/stars.png', fit: BoxFit.cover),
+                Container(
+                  width: double.infinity,
+                  height: double.infinity,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0x22020B15), Color(0xDD020B15)],
                     ),
-                    child: Text(
-                      AppStrings.appName,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Color(0xFFEDF6FF),
-                        fontSize: 52,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -1.5,
+                  ),
+                  child: Center(
+                    child: ScaleTransition(
+                      scale: _animation,
+                      child: Container(
+                        width: 181,
+                        height: 181,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: const Color(0xEE112B43),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x40000000),
+                              blurRadius: 10,
+                              offset: Offset(4, 4),
+                            ),
+                            BoxShadow(
+                              color: Color(0x66BDBDBD),
+                              blurRadius: 10,
+                              offset: Offset(-4, -4),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          AppStrings.appName,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Color(0xFFEDF6FF),
+                            fontSize: 52,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: -1.5,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
+              ],
             ),
           ),
         );

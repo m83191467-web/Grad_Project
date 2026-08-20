@@ -79,7 +79,7 @@ class AppTheme {
       colorScheme: scheme,
       fontFamily: 'Cairo',
       visualDensity: VisualDensity.adaptivePlatformDensity,
-      scaffoldBackgroundColor: dark ? const Color(0xFF0E171E) : background,
+      scaffoldBackgroundColor: background,
       textTheme: TextTheme(
         displayLarge: _text(32, FontWeight.w800, scheme.onSurface, 1.15),
         displayMedium: _text(28, FontWeight.w800, scheme.onSurface, 1.2),

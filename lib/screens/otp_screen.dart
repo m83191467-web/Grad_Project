@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../core/constants/app_strings.dart';
 import '../core/theme/app_theme.dart';
+import '../core/widgets/space_background.dart';
 import '../features/auth/presentation/bloc/auth_bloc.dart';
 import '../features/auth/presentation/bloc/auth_event.dart';
 import '../features/auth/presentation/bloc/auth_state.dart';
@@ -64,88 +65,90 @@ class _OtpScreenState extends State<OtpScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: AppTheme.background,
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(37, 24, 37, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: IconButton(
-                    onPressed: () => Navigator.maybePop(context),
-                    padding: EdgeInsets.zero,
+        backgroundColor: Colors.transparent,
+        body: SpaceBackground(
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(37, 24, 37, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Align(
                     alignment: Alignment.centerLeft,
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: AppTheme.textSecondary,
-                      size: 28,
+                    child: IconButton(
+                      onPressed: () => Navigator.maybePop(context),
+                      padding: EdgeInsets.zero,
+                      alignment: Alignment.centerLeft,
+                      icon: const Icon(
+                        Icons.arrow_back,
+                        color: AppTheme.textSecondary,
+                        size: 28,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  '${AppStrings.verifyOtp}\n${widget.phoneNumber}',
-                  textAlign: TextAlign.left,
-                  style: const TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 24,
-                    height: 1.35,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 34),
-                TextField(
-                  controller: otpController,
-                  keyboardType: TextInputType.number,
-                  enabled: !loading,
-                  style: const TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 28,
-                    letterSpacing: 14,
-                  ),
-                  decoration: const InputDecoration(
-                    hintText: '••••',
-                    filled: false,
-                    hintStyle: TextStyle(color: Color(0xFF979797)),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: AppTheme.outline),
-                    ),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: AppTheme.primary),
+                  const SizedBox(height: 24),
+                  Text(
+                    '${AppStrings.verifyOtp}\n${widget.phoneNumber}',
+                    textAlign: TextAlign.left,
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 24,
+                      height: 1.35,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                ),
-                const SizedBox(height: 28),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton(
-                    onPressed: loading ? null : () {},
-                    child: const Text(
-                      'Resend Code',
-                      style: TextStyle(color: AppTheme.primary, fontSize: 18),
+                  const SizedBox(height: 34),
+                  TextField(
+                    controller: otpController,
+                    keyboardType: TextInputType.number,
+                    enabled: !loading,
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 28,
+                      letterSpacing: 14,
+                    ),
+                    decoration: const InputDecoration(
+                      hintText: '••••',
+                      filled: false,
+                      hintStyle: TextStyle(color: Color(0xFF979797)),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: AppTheme.outline),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: AppTheme.primary),
+                      ),
                     ),
                   ),
-                ),
-                const Spacer(),
-                SizedBox(
-                  width: double.infinity,
-                  height: 58,
-                  child: ElevatedButton(
-                    onPressed: loading ? null : _submitOtp,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                      shape: const RoundedRectangleBorder(),
-                      elevation: 4,
+                  const SizedBox(height: 28),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      onPressed: loading ? null : () {},
+                      child: const Text(
+                        'Resend Code',
+                        style: TextStyle(color: AppTheme.primary, fontSize: 18),
+                      ),
                     ),
-                    child: loading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : Text(AppStrings.next),
                   ),
-                ),
-              ],
+                  const Spacer(),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 58,
+                    child: ElevatedButton(
+                      onPressed: loading ? null : _submitOtp,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        shape: const RoundedRectangleBorder(),
+                        elevation: 4,
+                      ),
+                      child: loading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : Text(AppStrings.next),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
