@@ -3,8 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 abstract class AuthRemoteDataSource {
-  Future<User?> signInAnonymously();
-  Future<void> saveUser({required String uid, required String phone});
   Future<User?> getCurrentUser();
   Future<void> signOut();
   Future<User?> signInWithGoogle();
@@ -26,24 +24,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
-
-  @override
-  Future<User?> signInAnonymously() async {
-    final result = await _auth.signInAnonymously();
-    return result.user;
-  }
-
-  @override
-  Future<void> saveUser({required String uid, required String phone}) async {
-    await _firestore.collection('users').doc(uid).set({
-      'uid': uid,
-      'name': '',
-      'email': '',
-      'phone': phone,
-      'type': 'passenger',
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-  }
 
   @override
   Future<User?> getCurrentUser() async {

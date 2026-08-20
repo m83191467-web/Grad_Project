@@ -5,7 +5,7 @@ class VerifyOtp {
 
   VerifyOtp(this.repository);
 
-  Future<void> call(String otp) async {
-    return repository.verifyOtp(otp);
+  Future<void> call(String otp, {required String phoneNumber}) async {
+    return repository.verifyOtp(otp, phoneNumber: phoneNumber);
   }
 }

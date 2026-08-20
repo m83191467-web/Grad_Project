@@ -3,17 +3,13 @@ import 'auth_event.dart';
 import 'auth_state.dart';
 import '../../domain/usecases/login_with_phone.dart';
 import '../../domain/usecases/verify_otp.dart';
-import '../../domain/usecases/register_user.dart';
 import '../../domain/usecases/is_signed_in.dart';
 import '../../domain/usecases/sign_out.dart';
-import '../../../user/domain/usecases/create_passenger.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LoginWithPhone loginWithPhone;
   final VerifyOtp verifyOtp;
-  final RegisterUser registerUser;
-  final CreatePassenger createPassenger;
   final IsSignedIn isSignedIn;
   final SignOut signOut;
   final AuthRepositoryImpl authRepository;
@@ -21,8 +17,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   AuthBloc({
     required this.loginWithPhone,
     required this.verifyOtp,
-    required this.registerUser,
-    required this.createPassenger,
     required this.isSignedIn,
     required this.signOut,
     required this.authRepository,
@@ -56,8 +50,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      await loginWithPhone.call(event.phoneNumber);
-      emit(AuthCodeSent());
+      final phoneNumber = await loginWithPhone.call(event.phoneNumber);
+      emit(AuthCodeSent(phoneNumber: phoneNumber));
     } catch (e) {
       emit(AuthError(e.toString()));
     }
@@ -95,7 +89,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      await verifyOtp.call(event.otp);
+      await verifyOtp.call(event.otp, phoneNumber: event.phoneNumber);
       emit(AuthAuthenticated(role: await authRepository.currentUserRole()));
     } catch (e) {
       emit(AuthError(e.toString()));

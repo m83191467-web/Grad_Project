@@ -10,15 +10,15 @@ class AuthRepositoryImpl implements AuthRepository {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // store the latest verificationId and phone while waiting for OTP
-  String? _latestVerificationId;
-  final Map<String, String> _verificationIdToPhone = {};
+  // Keep verification sessions by phone so a second request cannot overwrite
+  // the OTP session belonging to another active flow.
+  final Map<String, String> _verificationIdByPhone = {};
 
   AuthRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<void> loginWithPhone(String phoneNumber) async {
-    final completer = Completer<void>();
+  Future<String> loginWithPhone(String phoneNumber) async {
+    final completer = Completer<String>();
 
     await _auth.verifyPhoneNumber(
       phoneNumber: phoneNumber,
@@ -36,7 +36,7 @@ class AuthRepositoryImpl implements AuthRepository {
               'createdAt': FieldValue.serverTimestamp(),
             });
           }
-          if (!completer.isCompleted) completer.complete();
+          if (!completer.isCompleted) completer.complete(phoneNumber);
         } catch (e) {
           if (!completer.isCompleted) completer.completeError(e);
         }
@@ -45,12 +45,11 @@ class AuthRepositoryImpl implements AuthRepository {
         if (!completer.isCompleted) completer.completeError(e);
       },
       codeSent: (String verificationId, int? resendToken) async {
-        _latestVerificationId = verificationId;
-        _verificationIdToPhone[verificationId] = phoneNumber;
-        if (!completer.isCompleted) completer.complete();
+        _verificationIdByPhone[phoneNumber] = verificationId;
+        if (!completer.isCompleted) completer.complete(phoneNumber);
       },
       codeAutoRetrievalTimeout: (String verificationId) {
-        _latestVerificationId = verificationId;
+        _verificationIdByPhone[phoneNumber] = verificationId;
       },
       timeout: const Duration(seconds: 60),
     );
@@ -59,8 +58,11 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<void> verifyOtp(String otp) async {
-    final verificationId = _latestVerificationId;
+  Future<void> verifyOtp(
+    String otp, {
+    required String phoneNumber,
+  }) async {
+    final verificationId = _verificationIdByPhone[phoneNumber];
     if (verificationId == null) {
       throw Exception(
         'No verificationId available. Call loginWithPhone first.',
@@ -75,29 +77,16 @@ class AuthRepositoryImpl implements AuthRepository {
     final userCred = await _auth.signInWithCredential(credential);
     final user = userCred.user;
     if (user != null) {
-      final phone = _verificationIdToPhone[verificationId] ?? '';
       await _firestore.collection('users').doc(user.uid).set({
         'uid': user.uid,
         'name': user.displayName ?? '',
         'email': user.email ?? '',
-        'phone': phone,
+        'phone': phoneNumber,
         'type': 'passenger',
         'createdAt': FieldValue.serverTimestamp(),
       });
     }
-  }
-
-  @override
-  Future<void> register({
-    required String name,
-    required String phone,
-    String? email,
-  }) async {
-    final user = await remoteDataSource.signInAnonymously();
-    if (user != null) {
-      await remoteDataSource.saveUser(uid: user.uid, phone: phone);
-      // Additional fields (name,email) can be updated later
-    }
+    _verificationIdByPhone.remove(phoneNumber);
   }
 
   Future<void> loginWithEmail(String email, String password) async {
@@ -131,13 +120,19 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<String> currentUserRole() async {
     final user = await remoteDataSource.getCurrentUser();
-    if (user == null) return 'passenger';
+    if (user == null) throw StateError('No authenticated user found.');
     try {
       final snapshot = await _firestore.collection('users').doc(user.uid).get();
+      if (!snapshot.exists) {
+        throw StateError('Your account profile has not been provisioned.');
+      }
       final role = snapshot.data()?['type'];
-      return role == 'driver' || role == 'admin' ? role as String : 'passenger';
-    } catch (_) {
-      return 'passenger';
+      if (role is String && ['passenger', 'driver', 'admin'].contains(role)) {
+        return role;
+      }
+      throw StateError('Your account has an invalid role.');
+    } catch (error) {
+      rethrow;
     }
   }
 

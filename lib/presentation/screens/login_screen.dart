@@ -66,7 +66,12 @@ class _LoginScreenState extends State<LoginScreen> {
             setState(() => _isLoading = true);
           } else if (state is AuthAuthenticated) {
             setState(() => _isLoading = false);
-            Navigator.pushReplacementNamed(context, '/home');
+            final route = switch (state.role) {
+              'admin' => '/admin_dashboard_enhanced',
+              'driver' => '/driver_dashboard_enhanced',
+              _ => '/home',
+            };
+            Navigator.pushReplacementNamed(context, route);
           } else if (state is AuthError) {
             setState(() => _isLoading = false);
             ScaffoldMessenger.of(

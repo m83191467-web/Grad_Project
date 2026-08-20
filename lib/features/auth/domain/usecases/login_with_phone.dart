@@ -5,7 +5,7 @@ class LoginWithPhone {
 
   LoginWithPhone(this.repository);
 
-  Future<void> call(String phoneNumber) async {
+  Future<String> call(String phoneNumber) async {
     return repository.loginWithPhone(phoneNumber);
   }
 }

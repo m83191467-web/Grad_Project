@@ -1,6 +1,5 @@
 class AppStrings {
   static const String appName = 'Navio';
-
   static const String login = 'تسجيل الدخول';
   static const String register = 'إنشاء حساب';
   static const String email = 'البريد الإلكتروني';
@@ -14,17 +13,15 @@ class AppStrings {
   static const String welcomeBack = 'مرحباً بعودتك';
   static const String createAccount = 'أنشئ حسابك الآن';
   static const String or = 'أو';
-  static const String continueWithGoogle = 'متابعة بواسطة Google';
+  static const String continueWithGoogle = 'المتابعة بواسطة Google';
   static const String sendOtp = 'إرسال رمز التحقق';
   static const String verifyOtp = 'تحقق من الرمز';
-
   static const String welcome = 'أهلاً بك';
   static const String searchRoute = 'ابحث عن خط...';
   static const String currentLocation = 'الموقع الحالي';
   static const String nearbyBuses = 'الحافلات القريبة';
   static const String favoriteRoutes = 'خطوطي المفضلة';
   static const String recentTrips = 'رحلاتي الأخيرة';
-
   static const String tripDetails = 'تفاصيل الرحلة';
   static const String boarding = 'محطة الصعود';
   static const String dropoff = 'محطة النزول';
@@ -35,13 +32,11 @@ class AppStrings {
   static const String cancelTrip = 'إلغاء الرحلة';
   static const String from = 'من';
   static const String to = 'إلى';
-
   static const String liveTracking = 'تتبع مباشر';
   static const String busArriving = 'الحافلة تصل خلال';
   static const String minutes = 'دقائق';
   static const String kmAway = 'كم';
   static const String arriveAlert = 'تنبيه الوصول';
-
   static const String driverDashboard = 'لوحة تحكم السائق';
   static const String status = 'الحالة';
   static const String online = 'متصل';
@@ -50,7 +45,6 @@ class AppStrings {
   static const String startTrip = 'بدء الرحلة';
   static const String endTrip = 'إنهاء الرحلة';
   static const String registerPassenger = 'تسجيل راكب جديد';
-
   static const String adminDashboard = 'لوحة تحكم المدير';
   static const String totalBuses = 'إجمالي الحافلات';
   static const String totalPassengers = 'إجمالي الركاب';
@@ -63,7 +57,6 @@ class AppStrings {
   static const String fuelPrice = 'سعر الوقود';
   static const String updatePrices = 'تحديث الأسعار';
   static const String driverPerformance = 'أداء السائقين';
-
   static const String profile = 'الملف الشخصي';
   static const String settings = 'الإعدادات';
   static const String darkMode = 'الوضع الليلي';
@@ -74,7 +67,6 @@ class AppStrings {
   static const String creditCard = 'بطاقتي الائتمانية';
   static const String wallet = 'رصيد المحفظة';
   static const String logout = 'تسجيل الخروج';
-
   static const String loading = 'جاري التحميل...';
   static const String error = 'حدث خطأ';
   static const String success = 'تم بنجاح';

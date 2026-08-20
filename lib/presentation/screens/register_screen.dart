@@ -51,7 +51,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
           setState(() => _isLoading = true);
         } else if (state is AuthAuthenticated) {
           setState(() => _isLoading = false);
-          Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
+          final route = switch (state.role) {
+            'admin' => '/admin_dashboard_enhanced',
+            'driver' => '/driver_dashboard_enhanced',
+            _ => '/home',
+          };
+          Navigator.pushNamedAndRemoveUntil(context, route, (_) => false);
         } else if (state is AuthError) {
           setState(() => _isLoading = false);
           ScaffoldMessenger.of(

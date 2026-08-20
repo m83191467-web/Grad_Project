@@ -32,10 +32,11 @@ class GoogleSignInRequested extends AuthEvent {
 
 class OtpSubmitted extends AuthEvent {
   final String otp;
-  const OtpSubmitted(this.otp);
+  final String phoneNumber;
+  const OtpSubmitted(this.otp, {required this.phoneNumber});
 
   @override
-  List<Object?> get props => [otp];
+  List<Object?> get props => [otp, phoneNumber];
 }
 
 class LogoutRequested extends AuthEvent {}
