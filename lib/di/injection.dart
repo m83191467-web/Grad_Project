@@ -13,6 +13,8 @@ import '../features/auth/domain/usecases/register_user.dart';
 import '../features/auth/domain/usecases/is_signed_in.dart';
 import '../features/auth/domain/usecases/sign_out.dart';
 import '../features/trip/presentation/bloc/trip_bloc.dart';
+import '../features/trip/data/repositories/trip_repository_impl.dart';
+import '../features/trip/domain/repositories/trip_repository.dart';
 import '../features/user/data/datasources/user_remote_datasource.dart';
 import '../features/user/data/repositories/user_repository_impl.dart';
 import '../features/user/domain/repositories/user_repository.dart';
@@ -27,6 +29,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => ApiService());
   sl.registerLazySingleton(() => LocationService());
   sl.registerLazySingleton(() => PricingService());
+  sl.registerLazySingleton<TripRepository>(() => TripRepositoryImpl());
 
   // Data sources
   sl.registerLazySingleton<AuthRemoteDataSource>(
@@ -70,5 +73,7 @@ Future<void> init() async {
     ),
   );
   sl.registerFactory(() => UserDataBloc(userRepository: sl()));
-  sl.registerFactory(() => TripBloc(pricingService: sl()));
+  sl.registerFactory(
+    () => TripBloc(pricingService: sl(), tripRepository: sl()),
+  );
 }

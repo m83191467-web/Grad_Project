@@ -1,14 +1,18 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../data/services/pricing_service.dart';
+import '../../data/repositories/trip_repository_impl.dart';
+import '../../domain/repositories/trip_repository.dart';
 import 'trip_event.dart';
 import 'trip_state.dart';
 
 class TripBloc extends Bloc<TripEvent, TripState> {
   final PricingService _pricingService;
+  final TripRepository _tripRepository;
 
-  TripBloc({PricingService? pricingService})
+  TripBloc({PricingService? pricingService, TripRepository? tripRepository})
     : _pricingService = pricingService ?? PricingService(),
+      _tripRepository = tripRepository ?? TripRepositoryImpl(),
       super(const TripInitial()) {
     on<CalculateFareEvent>(_onCalculateFare);
     on<StartTripEvent>(_onStartTrip);
@@ -100,12 +104,16 @@ class TripBloc extends Bloc<TripEvent, TripState> {
   Future<void> _onBookTrip(BookTripEvent event, Emitter<TripState> emit) async {
     emit(const TripLoading());
     try {
-      // In a real app, you would call your API/repository here
+      final trip = await _tripRepository.bookTrip(
+        passengerId: event.userId,
+        routeId: event.routeId,
+        fare: event.fare,
+      );
       emit(
         TripBooked(
-          tripId: 'trip_${DateTime.now().millisecondsSinceEpoch}',
-          fare: event.fare,
-          routeId: event.routeId,
+          tripId: trip.id,
+          fare: trip.fareAmount,
+          routeId: trip.routeId,
         ),
       );
     } catch (e) {
@@ -119,9 +127,8 @@ class TripBloc extends Bloc<TripEvent, TripState> {
   ) async {
     emit(const TripLoading());
     try {
-      // In a real app, you would fetch from API/repository
-      // For now, return empty list
-      emit(const TripsLoaded(trips: []));
+      final trips = await _tripRepository.fetchPassengerTrips(event.userId);
+      emit(TripsLoaded(trips: trips));
     } catch (e) {
       emit(TripError(message: 'Failed to fetch trips: $e'));
     }
@@ -133,6 +140,7 @@ class TripBloc extends Bloc<TripEvent, TripState> {
   ) async {
     emit(const TripLoading());
     try {
+      await _tripRepository.updateStatus(event.tripId, 'cancelled');
       emit(TripCancelled(tripId: event.tripId));
     } catch (e) {
       emit(TripError(message: 'Failed to cancel trip: $e'));
@@ -142,6 +150,7 @@ class TripBloc extends Bloc<TripEvent, TripState> {
   Future<void> _onRateTrip(RateTripEvent event, Emitter<TripState> emit) async {
     emit(const TripLoading());
     try {
+      await _tripRepository.rateTrip(event.tripId, event.rating);
       emit(TripRated(tripId: event.tripId, rating: event.rating));
     } catch (e) {
       emit(TripError(message: 'Failed to rate trip: $e'));
