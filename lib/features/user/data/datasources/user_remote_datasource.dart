@@ -76,11 +76,17 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
   @override
   Future<List<RouteModel>> fetchAvailableRoutes() async {
     try {
+      // Read all routes and filter in Dart. This also supports older route
+      // documents that were created before the `status` field was required.
       final snapshot = await _db
           .collection('routes')
-          .where('status', isEqualTo: 'active')
-          .get();
+          .get()
+          .timeout(const Duration(seconds: 12));
       return snapshot.docs
+          .where((doc) {
+            final status = doc.data()['status'];
+            return status == null || status == 'active';
+          })
           .map((doc) => RouteModel.fromMap(doc.data(), doc.id))
           .toList();
     } catch (e) {

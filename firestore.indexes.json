@@ -4,9 +4,20 @@
       "collectionGroup": "trips",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "passengerId", "order": "ASCENDING" },
-        { "fieldPath": "tripDate", "order": "DESCENDING" }
-      ]
+        {
+          "fieldPath": "passengerId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tripDate",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
     }
   ],
   "fieldOverrides": []
