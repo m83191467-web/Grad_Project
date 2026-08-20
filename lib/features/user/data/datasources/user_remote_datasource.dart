@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../models/user_model.dart';
 import '../../../../models/route_model.dart';
 import '../../../../models/trip_model.dart';
@@ -35,12 +36,17 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
     required String phone,
     String? email,
   }) async {
-    await _db.collection('users').add({
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw StateError('You must be signed in to create a passenger profile.');
+    }
+    await _db.collection('users').doc(user.uid).set({
+      'uid': user.uid,
       'name': name,
       'phone': phone,
       'email': email ?? '',
       'type': 'passenger',
-      'createdAt': DateTime.now(),
+      'createdAt': FieldValue.serverTimestamp(),
     });
   }
 

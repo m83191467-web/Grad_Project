@@ -29,6 +29,8 @@ class AuthRepositoryImpl implements AuthRepository {
           if (user != null) {
             await _firestore.collection('users').doc(user.uid).set({
               'uid': user.uid,
+              'name': user.displayName ?? '',
+              'email': user.email ?? '',
               'phone': phoneNumber,
               'type': 'passenger',
               'createdAt': FieldValue.serverTimestamp(),
@@ -76,6 +78,8 @@ class AuthRepositoryImpl implements AuthRepository {
       final phone = _verificationIdToPhone[verificationId] ?? '';
       await _firestore.collection('users').doc(user.uid).set({
         'uid': user.uid,
+        'name': user.displayName ?? '',
+        'email': user.email ?? '',
         'phone': phone,
         'type': 'passenger',
         'createdAt': FieldValue.serverTimestamp(),
@@ -98,6 +102,20 @@ class AuthRepositoryImpl implements AuthRepository {
 
   Future<void> loginWithEmail(String email, String password) async {
     await remoteDataSource.signInWithEmail(email, password);
+  }
+
+  Future<void> registerWithEmail({
+    required String email,
+    required String password,
+    required String name,
+    required String phone,
+  }) async {
+    await remoteDataSource.registerWithEmail(
+      email: email,
+      password: password,
+      name: name,
+      phone: phone,
+    );
   }
 
   Future<void> signInWithGoogle() async {

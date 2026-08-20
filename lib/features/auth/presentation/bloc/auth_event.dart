@@ -44,13 +44,15 @@ class RegisterRequested extends AuthEvent {
   final String name;
   final String phone;
   final String? email;
+  final String password;
 
   const RegisterRequested({
     required this.name,
     required this.phone,
     this.email,
+    this.password = '',
   });
 
   @override
-  List<Object?> get props => [name, phone, email];
+  List<Object?> get props => [name, phone, email, password];
 }

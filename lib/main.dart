@@ -51,11 +51,8 @@ class NavioApp extends StatelessWidget {
             supportedLocales: const [Locale('ar'), Locale('en')],
             localizationsDelegates: GlobalMaterialLocalizations.delegates,
             theme: AppTheme.lightTheme,
-            // The product currently ships one polished light theme. Keeping
-            // the provider preserves compatibility with existing settings,
-            // while preventing the old dark palette from being shown.
-            darkTheme: AppTheme.lightTheme,
-            themeMode: ThemeMode.light,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: theme.themeMode,
             builder: (context, child) {
               return Directionality(
                 textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,

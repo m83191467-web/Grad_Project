@@ -15,14 +15,35 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'admin';
     }
 
+    function validUserProfile() {
+      return request.resource.data.keys().hasOnly([
+          'uid', 'name', 'email', 'phone', 'type', 'createdAt', 'updatedAt'
+        ]) &&
+        request.resource.data.uid == request.auth.uid &&
+        request.resource.data.type in ['passenger', 'driver', 'admin'] &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() <= 120 &&
+        request.resource.data.email is string &&
+        request.resource.data.email.size() <= 254 &&
+        request.resource.data.phone is string &&
+        request.resource.data.phone.size() <= 32;
+    }
+
     function unchanged(field) {
       return request.resource.data[field] == resource.data[field];
     }
 
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) &&
+        validUserProfile() &&
+        request.resource.data.type == 'passenger';
+      allow update: if isAdmin() ||
+        (isOwner(userId) &&
+         validUserProfile() &&
+         unchanged('uid') &&
+         unchanged('type') &&
+         unchanged('createdAt'));
       allow delete: if isAdmin();
     }
 
@@ -30,7 +51,10 @@ service cloud.firestore {
       allow read: if signedIn();
       allow create, delete: if isAdmin();
       allow update: if isAdmin() ||
-        (signedIn() && resource.data.driverId == request.auth.uid) ||
+        (signedIn() && resource.data.driverId == request.auth.uid &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+           'status', 'availableSeats', 'currentLocation', 'updatedAt'
+         ])) ||
         (signedIn() &&
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['availableSeats']) &&
          resource.data.availableSeats is number &&
@@ -44,14 +68,28 @@ service cloud.firestore {
         (resource.data.passengerId == request.auth.uid ||
          resource.data.driverId == request.auth.uid || isAdmin());
       allow create: if signedIn() &&
-        request.resource.data.passengerId == request.auth.uid;
+        request.resource.data.passengerId == request.auth.uid &&
+        request.resource.data.keys().hasOnly([
+          'passengerId', 'routeId', 'driverId', 'tripDate', 'fareAmount',
+          'status', 'createdAt'
+        ]) &&
+        request.resource.data.routeId is string &&
+        request.resource.data.fareAmount is number &&
+        request.resource.data.fareAmount >= 0 &&
+        request.resource.data.status == 'pending';
       allow update: if isAdmin() ||
         (signedIn() && resource.data.passengerId == request.auth.uid &&
          unchanged('passengerId') && unchanged('driverId') &&
-         unchanged('fareAmount') && unchanged('createdAt')) ||
+         unchanged('fareAmount') && unchanged('createdAt') &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+           'status', 'rating', 'updatedAt'
+         ])) ||
         (signedIn() && resource.data.driverId == request.auth.uid &&
          unchanged('passengerId') && unchanged('driverId') &&
-         unchanged('fareAmount') && unchanged('createdAt'));
+         unchanged('fareAmount') && unchanged('createdAt') &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+           'status', 'currentLocation', 'updatedAt'
+         ]));
       allow delete: if isAdmin();
     }
 

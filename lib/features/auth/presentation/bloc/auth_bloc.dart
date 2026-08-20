@@ -108,10 +108,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      await createPassenger.call(
+      final email = event.email;
+      if (email == null || email.isEmpty) {
+        throw ArgumentError('An email address is required to register.');
+      }
+      await authRepository.registerWithEmail(
         name: event.name,
         phone: event.phone,
-        email: event.email,
+        email: email,
+        password: event.password,
       );
       emit(AuthAuthenticated(role: await authRepository.currentUserRole()));
     } catch (e) {

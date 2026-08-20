@@ -9,6 +9,12 @@ abstract class AuthRemoteDataSource {
   Future<void> signOut();
   Future<User?> signInWithGoogle();
   Future<User?> signInWithEmail(String email, String password);
+  Future<User?> registerWithEmail({
+    required String email,
+    required String password,
+    required String name,
+    required String phone,
+  });
   Future<bool> isEmailUnique(String email);
   Future<bool> isPhoneUnique(String phoneNumber);
   Future<bool> isUidUnique(String uid);
@@ -31,6 +37,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<void> saveUser({required String uid, required String phone}) async {
     await _firestore.collection('users').doc(uid).set({
       'uid': uid,
+      'name': '',
+      'email': '',
       'phone': phone,
       'type': 'passenger',
       'createdAt': FieldValue.serverTimestamp(),
@@ -92,6 +100,32 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     } catch (e) {
       rethrow;
     }
+  }
+
+  @override
+  Future<User?> registerWithEmail({
+    required String email,
+    required String password,
+    required String name,
+    required String phone,
+  }) async {
+    final result = await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    final user = result.user;
+    if (user != null) {
+      await user.updateDisplayName(name);
+      await _firestore.collection('users').doc(user.uid).set({
+        'uid': user.uid,
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'type': 'passenger',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
+    return user;
   }
 
   /// Check if email is unique in Firestore
