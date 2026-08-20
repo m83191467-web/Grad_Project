@@ -16,7 +16,6 @@ class EnhancedProfileScreen extends StatefulWidget {
 }
 
 class _EnhancedProfileScreenState extends State<EnhancedProfileScreen> {
-  bool _darkMode = false;
   bool _notifications = true;
   String _language = 'العربية';
 
@@ -124,17 +123,6 @@ class _EnhancedProfileScreenState extends State<EnhancedProfileScreen> {
                         Card(
                           child: Column(
                             children: [
-                              SwitchListTile(
-                                title: Text(AppStrings.darkMode),
-                                value: _darkMode,
-                                onChanged: (value) {
-                                  setState(() {
-                                    _darkMode = value;
-                                  });
-                                },
-                                activeThumbColor: AppTheme.primary,
-                              ),
-                              const Divider(height: 0),
                               SwitchListTile(
                                 title: Text(AppStrings.notifications),
                                 value: _notifications,

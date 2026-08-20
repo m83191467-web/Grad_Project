@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/constants/app_strings.dart';
-import '../../core/theme/app_theme.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_state.dart';
 
@@ -86,50 +86,66 @@ class _SplashScreenState extends State<SplashScreen>
           });
         }
 
-        return Scaffold(
-          body: Container(
-            width: double.infinity,
-            height: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [AppTheme.primary, AppTheme.primaryDark],
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: const SystemUiOverlayStyle(
+            statusBarColor: Colors.black,
+            statusBarIconBrightness: Brightness.light,
+            statusBarBrightness: Brightness.dark,
+            systemNavigationBarColor: Colors.black,
+            systemNavigationBarIconBrightness: Brightness.light,
+          ),
+          child: Scaffold(
+            backgroundColor: const Color(0xFF1976D2),
+            body: Container(
+              width: double.infinity,
+              height: double.infinity,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFF1976D2), Color(0xFF535AFF)],
+                ),
               ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ScaleTransition(
+              child: Center(
+                child: ScaleTransition(
                   scale: _animation,
                   child: Container(
-                    width: 120,
-                    height: 120,
+                    width: 181,
+                    height: 181,
+                    alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.14),
-                      borderRadius: BorderRadius.circular(30),
+                      gradient: const LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Color(0xFF1976D2), Color(0xFF535AFF)],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x40000000),
+                          blurRadius: 10,
+                          offset: Offset(4, 4),
+                        ),
+                        BoxShadow(
+                          color: Color(0x66BDBDBD),
+                          blurRadius: 10,
+                          offset: Offset(-4, -4),
+                        ),
+                      ],
                     ),
-                    child: const Icon(
-                      Icons.directions_bus,
-                      size: 60,
-                      color: Colors.white,
+                    child: Text(
+                      AppStrings.appName,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Color(0xFFEDF6FF),
+                        fontSize: 52,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -1.5,
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
-                Text(
-                  AppStrings.appName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 48),
-                const CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              ],
+              ),
             ),
           ),
         );

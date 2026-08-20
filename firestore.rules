@@ -30,7 +30,13 @@ service cloud.firestore {
       allow read: if signedIn();
       allow create, delete: if isAdmin();
       allow update: if isAdmin() ||
-        (signedIn() && resource.data.driverId == request.auth.uid);
+        (signedIn() && resource.data.driverId == request.auth.uid) ||
+        (signedIn() &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['availableSeats']) &&
+         resource.data.availableSeats is number &&
+         request.resource.data.availableSeats is number &&
+         resource.data.availableSeats > 0 &&
+         request.resource.data.availableSeats == resource.data.availableSeats - 1);
     }
 
     match /trips/{tripId} {

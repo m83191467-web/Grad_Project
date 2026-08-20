@@ -77,11 +77,27 @@ class _LoginScreenState extends State<LoginScreen> {
         },
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.fromLTRB(32, 24, 32, 24),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton(
+                    onPressed: _isLoading
+                        ? null
+                        : () => Navigator.maybePop(context),
+                    padding: EdgeInsets.zero,
+                    alignment: Alignment.centerLeft,
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: AppTheme.textSecondary,
+                      size: 28,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
                 const Icon(
                   Icons.directions_bus,
                   size: 72,
@@ -90,8 +106,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 16),
                 Text(
                   AppStrings.login,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.displaySmall,
+                  textAlign: TextAlign.left,
+                  style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 30,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 32),
                 TextField(
@@ -101,6 +121,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   enabled: !_isLoading,
                   decoration: const InputDecoration(
                     hintText: 'example@email.com',
+                    filled: false,
+                    hintStyle: TextStyle(color: Color(0xFF979797)),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xFF979797)),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: AppTheme.primary),
+                    ),
                     labelText: 'البريد الإلكتروني',
                   ),
                 ),
@@ -112,6 +140,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   enabled: !_isLoading,
                   decoration: InputDecoration(
                     hintText: '********',
+                    filled: false,
+                    hintStyle: const TextStyle(color: Color(0xFF979797)),
+                    enabledBorder: const UnderlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xFF979797)),
+                    ),
+                    focusedBorder: const UnderlineInputBorder(
+                      borderSide: BorderSide(color: AppTheme.primary),
+                    ),
                     labelText: 'كلمة المرور',
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -127,15 +163,25 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
                 Align(
-                  alignment: Alignment.centerLeft,
+                  alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: _isLoading ? null : () {},
-                    child: Text(AppStrings.forgotPassword),
+                    child: Text(
+                      AppStrings.forgotPassword,
+                      style: const TextStyle(color: AppTheme.primary),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: _isLoading ? null : _handleLogin,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    shape: const RoundedRectangleBorder(),
+                    minimumSize: const Size(double.infinity, 58),
+                    elevation: 4,
+                  ),
                   child: _isLoading
                       ? const SizedBox(
                           height: 20,
@@ -158,6 +204,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 20),
                 OutlinedButton(
                   onPressed: _isLoading ? null : _handleGoogleLogin,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF535AFF),
+                    side: const BorderSide(color: Color(0xFF535AFF)),
+                    shape: const RoundedRectangleBorder(),
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

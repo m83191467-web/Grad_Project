@@ -143,11 +143,6 @@ class _ProfileScreenWithDataState extends State<ProfileScreenWithData> {
                       child: Column(
                         children: [
                           SwitchListTile(
-                            title: Text(AppStrings.darkMode),
-                            value: false,
-                            onChanged: (_) {},
-                          ),
-                          SwitchListTile(
                             title: Text(AppStrings.notifications),
                             value: true,
                             onChanged: (_) {},

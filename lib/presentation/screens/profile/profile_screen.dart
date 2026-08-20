@@ -7,7 +7,6 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../models/user_model.dart';
 import '../../../providers/language_provider.dart';
-import '../../../providers/theme_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -109,13 +108,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Card(
                   child: Column(
                     children: [
-                      SwitchListTile(
-                        title: Text(AppStrings.darkMode),
-                        value: context.watch<ThemeProvider>().isDarkMode,
-                        onChanged: (enabled) => context
-                            .read<ThemeProvider>()
-                            .toggleDarkMode(enabled),
-                      ),
                       SwitchListTile(
                         title: Text(AppStrings.notifications),
                         value: true,

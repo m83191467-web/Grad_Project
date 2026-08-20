@@ -20,6 +20,190 @@ class PassengerHomeScreen extends StatefulWidget {
   State<PassengerHomeScreen> createState() => _PassengerHomeScreenState();
 }
 
+class _DestinationPicker extends StatefulWidget {
+  const _DestinationPicker({
+    required this.initialRoutes,
+    required this.onRouteSelected,
+  });
+
+  final List<RouteModel> initialRoutes;
+  final void Function(RouteModel route, int routeIndex) onRouteSelected;
+
+  @override
+  State<_DestinationPicker> createState() => _DestinationPickerState();
+}
+
+class _DestinationPickerState extends State<_DestinationPicker> {
+  final _controller = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<UserDataBloc, UserDataState>(
+      builder: (context, state) {
+        final routes = state is RoutesLoaded
+            ? state.routes
+            : widget.initialRoutes;
+        final loading = state is UserDataLoading && routes.isEmpty;
+        final query = _query.trim().toLowerCase();
+        final results = routes.where((route) {
+          if (query.isEmpty) return true;
+          final searchable = '${route.startLocation} ${route.endLocation}'
+              .toLowerCase();
+          return searchable.contains(query);
+        }).toList();
+
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            8,
+            20,
+            MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Where do you want to go?',
+                style: TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                ),
+                textAlign: TextAlign.right,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _controller,
+                autofocus: true,
+                textAlign: TextAlign.right,
+                textInputAction: TextInputAction.search,
+                style: const TextStyle(color: AppTheme.textPrimary),
+                onChanged: (value) => setState(() => _query = value),
+                onSubmitted: (_) => FocusScope.of(context).unfocus(),
+                decoration: const InputDecoration(
+                  hintText: 'Search by starting point or destination',
+                  hintStyle: TextStyle(color: AppTheme.textLight),
+                  prefixIcon: Icon(Icons.search, color: AppTheme.textSecondary),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Color(0xFF979797)),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: AppTheme.primary),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 46,
+                child: ElevatedButton.icon(
+                  onPressed: () => setState(() => _query = _controller.text),
+                  icon: const Icon(Icons.search),
+                  label: const Text('Search'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (loading)
+                const Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 10),
+                      Text(
+                        'Loading routes...',
+                        style: TextStyle(color: AppTheme.textSecondary),
+                      ),
+                    ],
+                  ),
+                )
+              else if (state is UserDataError)
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Could not load routes',
+                        style: TextStyle(color: Color(0xFFFF9A8B)),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: () => context.read<UserDataBloc>().add(
+                          const FetchAvailableRoutesRequested(),
+                        ),
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Try again'),
+                      ),
+                    ],
+                  ),
+                )
+              else if (routes.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text(
+                    'No routes are available yet.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppTheme.textSecondary),
+                  ),
+                )
+              else if (results.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text(
+                    'No matching routes found.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppTheme.textSecondary),
+                  ),
+                )
+              else
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 280),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: results.length,
+                    separatorBuilder: (_, _) =>
+                        const Divider(height: 1, color: AppTheme.outline),
+                    itemBuilder: (context, index) {
+                      final route = results[index];
+                      final routeIndex = routes.indexOf(route);
+                      return ListTile(
+                        leading: const CircleAvatar(
+                          backgroundColor: AppTheme.primary,
+                          child: Icon(
+                            Icons.directions_bus,
+                            color: Colors.white,
+                          ),
+                        ),
+                        title: Text(
+                          '${route.startLocation} → ${route.endLocation}',
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(color: AppTheme.textPrimary),
+                        ),
+                        subtitle: Text(
+                          '${route.duration} min · ${route.fare.toStringAsFixed(0)} EGP',
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(color: AppTheme.textSecondary),
+                        ),
+                        onTap: () => widget.onRouteSelected(route, routeIndex),
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   int _selectedIndex = 0;
   late final Set<Marker> _markers = {};
@@ -137,6 +321,9 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
+        backgroundColor: AppTheme.surface,
+        foregroundColor: AppTheme.textPrimary,
+        elevation: 0,
         title: Text(AppStrings.appName),
         actions: [
           IconButton(
@@ -194,7 +381,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.surface,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
@@ -206,13 +393,14 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
-          onTap: _showDestinationPicker,
+          onTap: _showDestinationPickerV2,
           child: AbsorbPointer(
             child: TextField(
               textAlign: TextAlign.right,
               readOnly: true,
               decoration: InputDecoration(
                 hintText: AppStrings.searchRoute,
+                hintStyle: const TextStyle(color: AppTheme.textLight),
                 border: InputBorder.none,
                 prefixIcon: const Icon(
                   Icons.search,
@@ -608,6 +796,9 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   // ========== BOTTOM NAVIGATION ==========
   Widget _buildBottomNav() {
     return BottomNavigationBar(
+      backgroundColor: AppTheme.surface,
+      selectedItemColor: AppTheme.primary,
+      unselectedItemColor: AppTheme.textLight,
       currentIndex: _selectedIndex,
       onTap: _handleBottomNavigation,
       items: const [
@@ -626,7 +817,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
         Navigator.pushNamed(context, '/trip_history');
         break;
       case 2:
-        _showDestinationPicker();
+        _showDestinationPickerV2();
         break;
       case 3:
         Navigator.pushNamed(context, '/profile');
@@ -634,6 +825,29 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
     }
   }
 
+  void _showDestinationPickerV2() {
+    final currentState = context.read<UserDataBloc>().state;
+    if (currentState is RoutesLoaded) {
+      _availableRoutes = currentState.routes;
+    }
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: AppTheme.surface,
+      barrierColor: Colors.black54,
+      builder: (sheetContext) => _DestinationPicker(
+        initialRoutes: _availableRoutes,
+        onRouteSelected: (route, routeIndex) =>
+            _selectRouteFromSearch(sheetContext, route, routeIndex),
+      ),
+    );
+  }
+
+  // Kept for compatibility with older callers while the new picker handles
+  // live loading, filtering, errors, and retry states.
+  // ignore: unused_element
   void _showDestinationPicker() {
     // The routes may have loaded before the map listener was attached.
     // Always synchronize the picker with the latest Bloc state before it
@@ -648,6 +862,8 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
+      backgroundColor: AppTheme.surface,
+      barrierColor: Colors.black54,
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
@@ -682,6 +898,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                     autofocus: true,
                     textAlign: TextAlign.right,
                     textInputAction: TextInputAction.search,
+                    style: const TextStyle(color: Color(0xFFEDF6FF)),
                     onChanged: (value) {
                       setSheetState(() => destination = value);
                     },
@@ -689,6 +906,14 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                     decoration: const InputDecoration(
                       labelText: 'ابحث عن وجهة أو خط سير',
                       prefixIcon: Icon(Icons.search),
+                      filled: false,
+                      labelStyle: TextStyle(color: Color(0xFFBDBDBD)),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xFF979797)),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xFF535AFF)),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -788,6 +1013,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   // ========== DRAWER ==========
   Widget _buildDrawer() {
     return Drawer(
+      backgroundColor: AppTheme.surface,
       child: MediaQuery.removePadding(
         context: context,
         removeTop: true,
@@ -803,22 +1029,29 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
               padding: EdgeInsets.zero,
               children: [
                 DrawerHeader(
-                  decoration: const BoxDecoration(color: AppTheme.primary),
+                  margin: EdgeInsets.zero,
+                  padding: const EdgeInsets.fromLTRB(40, 36, 24, 20),
+                  curve: Curves.easeInOut,
+                  decoration: const BoxDecoration(color: AppTheme.surface),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildAvatar(user, 60),
-                      const SizedBox(height: 12),
+                      _buildAvatar(user, 48),
+                      const SizedBox(height: 6),
                       Text(
                         displayName,
                         style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
+                          color: AppTheme.textPrimary,
+                          fontSize: 16,
                         ),
                       ),
                       Text(
                         user?.email ?? '',
-                        style: const TextStyle(color: Colors.white70),
+                        style: const TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 12,
+                          height: 1.2,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),

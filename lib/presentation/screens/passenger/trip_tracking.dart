@@ -63,7 +63,12 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
     };
 
     return Scaffold(
-      appBar: AppBar(title: const Text('تتبع الرحلة')),
+      backgroundColor: AppTheme.background,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: AppTheme.textPrimary,
+        title: const Text('تتبع الرحلة'),
+      ),
       body: Stack(
         children: [
           GoogleMap(
@@ -89,6 +94,7 @@ class _TripTrackingScreenState extends State<TripTrackingScreen> {
 
   Widget _buildStatusCard(BuildContext context) {
     return Card(
+      color: Colors.black,
       elevation: 8,
       child: Padding(
         padding: const EdgeInsets.all(18),

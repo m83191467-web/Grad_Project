@@ -134,27 +134,32 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
 
   @override
   Future<void> bookTrip(String userId, String routeId) async {
-    try {
-      final routeDoc = await _db.collection('routes').doc(routeId).get();
-      if (routeDoc.exists) {
-        final routeData = routeDoc.data() ?? {};
-        await _db.collection('trips').add({
-          'passengerId': userId,
-          'routeId': routeId,
-          'driverId': routeData['driverId'],
-          'tripDate': routeData['departureTime'],
-          'fareAmount': routeData['fare'],
-          'status': 'pending',
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-        // Decrement available seats
-        await _db.collection('routes').doc(routeId).update({
-          'availableSeats': FieldValue.increment(-1),
-        });
+    final routeRef = _db.collection('routes').doc(routeId);
+
+    await _db.runTransaction((transaction) async {
+      final routeDoc = await transaction.get(routeRef);
+      if (!routeDoc.exists) {
+        throw StateError('Route not found');
       }
-    } catch (e) {
-      rethrow;
-    }
+
+      final routeData = routeDoc.data() ?? <String, dynamic>{};
+      final seats = (routeData['availableSeats'] as num?)?.toInt() ?? 0;
+      if (seats <= 0) {
+        throw StateError('No seats are available');
+      }
+
+      final tripRef = _db.collection('trips').doc();
+      transaction.set(tripRef, {
+        'passengerId': userId,
+        'routeId': routeId,
+        'driverId': routeData['driverId'],
+        'tripDate': routeData['departureTime'],
+        'fareAmount': routeData['fare'],
+        'status': 'pending',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      transaction.update(routeRef, {'availableSeats': seats - 1});
+    });
   }
 
   @override

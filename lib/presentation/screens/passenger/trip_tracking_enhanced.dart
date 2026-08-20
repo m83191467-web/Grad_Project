@@ -28,6 +28,7 @@ class _EnhancedTripTrackingScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.background,
       body: Stack(
         children: [
           // Google Map
@@ -43,10 +44,10 @@ class _EnhancedTripTrackingScreenState
             top: 16,
             left: 16,
             child: CircleAvatar(
-              backgroundColor: Colors.white,
+              backgroundColor: Colors.black,
               radius: 24,
               child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppTheme.primary),
+                icon: const Icon(Icons.arrow_back, color: AppTheme.textPrimary),
                 onPressed: () => Navigator.pop(context),
               ),
             ),
@@ -67,8 +68,8 @@ class _EnhancedTripTrackingScreenState
   Widget _buildBottomSheet(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        color: Colors.black,
+        borderRadius: BorderRadius.zero,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
@@ -88,7 +89,7 @@ class _EnhancedTripTrackingScreenState
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppTheme.textLight,
+                  color: const Color(0xFF979797),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -120,12 +121,12 @@ class _EnhancedTripTrackingScreenState
 
               // ETA Card
               Card(
-                color: AppTheme.secondary.withValues(alpha: 0.1),
+                color: AppTheme.surface,
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Row(
                     children: [
-                      const Icon(Icons.access_time, color: AppTheme.secondary),
+                      const Icon(Icons.access_time, color: AppTheme.primary),
                       const SizedBox(width: 12),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,8 +172,8 @@ class _EnhancedTripTrackingScreenState
                 icon: const Icon(Icons.notifications_active),
                 label: Text(AppStrings.arriveAlert),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppTheme.surface,
+                  foregroundColor: AppTheme.textPrimary,
                   minimumSize: const Size(double.infinity, 48),
                 ),
               ),

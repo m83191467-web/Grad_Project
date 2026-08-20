@@ -31,7 +31,12 @@ class _EnhancedTripHistoryScreenState extends State<EnhancedTripHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(AppStrings.recentTrips)),
+      backgroundColor: AppTheme.background,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: AppTheme.textPrimary,
+        title: Text(AppStrings.recentTrips),
+      ),
       body: BlocBuilder<UserDataBloc, UserDataState>(
         builder: (context, state) {
           if (state is UserDataLoading) {
@@ -55,6 +60,11 @@ class _EnhancedTripHistoryScreenState extends State<EnhancedTripHistoryScreen> {
                 child: Text(
                   AppStrings.noTripsFound,
                   textDirection: TextDirection.rtl,
+                  style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               );
             }

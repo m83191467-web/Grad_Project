@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class RouteModel {
   final String id;
   final String startLocation;
@@ -24,20 +26,35 @@ class RouteModel {
   });
 
   factory RouteModel.fromMap(Map<String, dynamic> map, String id) {
+    final departure = map['departureTime'];
+    final parsedDeparture = departure is Timestamp
+        ? departure.toDate()
+        : departure is DateTime
+        ? departure
+        : DateTime.tryParse(departure?.toString() ?? '') ?? DateTime.now();
+
     return RouteModel(
       id: id,
-      startLocation: map['startLocation'] ?? '',
-      endLocation: map['endLocation'] ?? '',
-      distance: (map['distance'] ?? 0).toDouble(),
-      duration: map['duration'] ?? 0,
-      fare: (map['fare'] ?? 0).toDouble(),
-      availableSeats: map['availableSeats'] ?? 0,
-      driverId: map['driverId'] ?? '',
-      departureTime: map['departureTime'] is DateTime
-          ? map['departureTime']
-          : DateTime.parse(map['departureTime'] ?? DateTime.now().toString()),
-      status: map['status'] ?? 'active',
+      startLocation: map['startLocation']?.toString() ?? '',
+      endLocation: map['endLocation']?.toString() ?? '',
+      distance: _asDouble(map['distance']),
+      duration: _asInt(map['duration']),
+      fare: _asDouble(map['fare']),
+      availableSeats: _asInt(map['availableSeats']),
+      driverId: map['driverId']?.toString() ?? '',
+      departureTime: parsedDeparture,
+      status: map['status']?.toString() ?? 'active',
     );
+  }
+
+  static double _asDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    return double.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  static int _asInt(dynamic value) {
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '') ?? 0;
   }
 
   Map<String, dynamic> toMap() {
