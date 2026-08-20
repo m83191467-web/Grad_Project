@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/theme/app_theme.dart';
@@ -214,6 +215,7 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
   bool _showWelcomeCard = true;
   LatLng? _pickupPoint;
   LatLng? _destinationPoint;
+  final Geocoding _geocoding = Geocoding();
 
   static const CameraPosition _initialPosition = CameraPosition(
     target: LatLng(15.5007, 32.5599),
@@ -417,6 +419,142 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
     });
   }
 
+  Future<void> _searchAndSetPoint(String query, bool isPickup) async {
+    final trimmedQuery = query.trim();
+    if (trimmedQuery.isEmpty) return;
+
+    try {
+      final results = await _geocoding
+          .locationFromAddress(trimmedQuery)
+          .timeout(const Duration(seconds: 12));
+      if (results.isEmpty) throw StateError('No place found');
+
+      final result = results.first;
+      final point = LatLng(result.latitude, result.longitude);
+      setState(() {
+        if (isPickup) {
+          _pickupPoint = point;
+        } else {
+          _destinationPoint = point;
+        }
+        _selectedRoutePolylines.clear();
+        if (_pickupPoint != null && _destinationPoint != null) {
+          _selectedRoutePolylines.add(
+            Polyline(
+              polylineId: const PolylineId('selected_route'),
+              points: [_pickupPoint!, _destinationPoint!],
+              color: AppTheme.primary,
+              width: 6,
+              geodesic: true,
+            ),
+          );
+        }
+      });
+
+      if (_pickupPoint != null && _destinationPoint != null) {
+        await _fitSelectedRoute();
+      } else {
+        await _mapController?.animateCamera(
+          CameraUpdate.newLatLngZoom(point, 15),
+        );
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isPickup
+                  ? 'Pickup point selected.'
+                  : 'Destination point selected.',
+            ),
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Place not found. Try a more specific address or pin it on the map.',
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  void _showMapPlaceSearch() {
+    final controller = TextEditingController();
+    var isPickup = _pickupPoint == null;
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) => Padding(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            20,
+            20,
+            MediaQuery.viewInsetsOf(context).bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Search on map',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 12),
+              SegmentedButton<bool>(
+                segments: const [
+                  ButtonSegment(
+                    value: true,
+                    label: Text('Pickup'),
+                    icon: Icon(Icons.trip_origin),
+                  ),
+                  ButtonSegment(
+                    value: false,
+                    label: Text('Destination'),
+                    icon: Icon(Icons.location_on),
+                  ),
+                ],
+                selected: {isPickup},
+                onSelectionChanged: (selection) =>
+                    setSheetState(() => isPickup = selection.first),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                textInputAction: TextInputAction.search,
+                onSubmitted: (value) async {
+                  Navigator.pop(sheetContext);
+                  await _searchAndSetPoint(value, isPickup);
+                },
+                decoration: const InputDecoration(
+                  hintText: 'Search city, street, or landmark',
+                  prefixIcon: Icon(Icons.search),
+                ),
+              ),
+              const SizedBox(height: 14),
+              FilledButton.icon(
+                onPressed: () async {
+                  final query = controller.text;
+                  Navigator.pop(sheetContext);
+                  await _searchAndSetPoint(query, isPickup);
+                },
+                icon: const Icon(Icons.search),
+                label: Text(
+                  isPickup ? 'Set pickup point' : 'Set destination point',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).whenComplete(controller.dispose);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -499,6 +637,11 @@ class _PassengerHomeScreenState extends State<PassengerHomeScreen> {
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
+                                  ),
+                                  IconButton(
+                                    tooltip: 'Search a place',
+                                    onPressed: _showMapPlaceSearch,
+                                    icon: const Icon(Icons.search),
                                   ),
                                   if (_pickupPoint != null)
                                     IconButton(
