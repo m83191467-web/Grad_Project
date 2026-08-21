@@ -7,6 +7,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../models/user_model.dart';
 import '../../../providers/language_provider.dart';
+import '../../../providers/theme_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -112,6 +113,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         title: Text(AppStrings.notifications),
                         value: true,
                         onChanged: (_) {},
+                      ),
+                      Consumer<ThemeProvider>(
+                        builder: (context, theme, _) => SwitchListTile(
+                          secondary: const Icon(Icons.dark_mode_outlined),
+                          title: Text(AppStrings.darkMode),
+                          value: theme.isDarkMode,
+                          onChanged: theme.toggleDarkMode,
+                        ),
                       ),
                       ListTile(
                         leading: const Icon(Icons.language),

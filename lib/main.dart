@@ -32,13 +32,11 @@ class NavioApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ...[
-          BlocProvider<AuthBloc>(
-            create: (_) => di.sl<AuthBloc>()..add(AppStarted()),
-          ),
-          BlocProvider<TripBloc>(create: (_) => di.sl<TripBloc>()),
-          BlocProvider<UserDataBloc>(create: (_) => di.sl<UserDataBloc>()),
-        ],
+        BlocProvider<AuthBloc>(
+          create: (_) => di.sl<AuthBloc>()..add(AppStarted()),
+        ),
+        BlocProvider<TripBloc>(create: (_) => di.sl<TripBloc>()),
+        BlocProvider<UserDataBloc>(create: (_) => di.sl<UserDataBloc>()),
       ],
       child: Consumer2<LanguageProvider, ThemeProvider>(
         builder: (context, language, theme, _) {
